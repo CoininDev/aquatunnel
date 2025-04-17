@@ -1,37 +1,31 @@
 use std::time::Instant;
 
-use legion::{systems::CommandBuffer, *};
-use sdl2::{pixels::Color, rect::FPoint};
+use legion::{systems::CommandBuffer, world::SubWorld, *};
+use sdl2::{EventPump, event::Event, keyboard::Keycode, pixels::Color, rect::FPoint};
 
 use crate::{
-    comps::{DebugSprite, Transform},
+    comps::{DebugSprite, Player, Transform},
     game::Time,
+    input::InputContext,
 };
 
 #[system]
-pub fn delta_update(#[resource] time: &mut Time) {
+pub fn time_update(#[resource] time: &mut Time) {
     let now = Instant::now();
     time.delta = now.duration_since(time.last).as_secs_f32();
     time.last = now;
 }
+
 #[system]
-pub fn spawn(cmd: &mut CommandBuffer, #[state] counter: &mut u32) {
-    if *counter <= 70000 {
-        cmd.push((
-            Transform::default(),
-            DebugSprite {
-                size: FPoint::new(80.0, 80.0),
-                color: Color::MAGENTA,
-            },
-        ));
-        println!("{}", *counter);
-        *counter += 1;
-    }
+pub fn input_update(#[resource] input: &mut InputContext) {
+    input.update();
 }
 
 #[system(for_each)]
-pub fn move_squares(transform: &mut Transform) {
-    transform.position.x += 1.0;
-    transform.position.y += 1.0;
+pub fn move_player(
+    #[resource] input_ctx: &InputContext,
+    tranform: &mut Transform,
+    player: &Player,
+) {
+    tranform.position += input_ctx.move_direction * player.speed;
 }
-

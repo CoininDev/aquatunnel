@@ -7,6 +7,10 @@ pub struct Transform {
     pub rotation: f64,
 }
 
+pub struct Player {
+    pub speed: f32,
+}
+
 impl Default for Transform {
     fn default() -> Transform {
         Transform {
@@ -18,7 +22,7 @@ impl Default for Transform {
 }
 
 pub struct Sprite {
-    pub image_path: String
+    pub image_path: String,
 }
 
 pub struct DebugSprite {

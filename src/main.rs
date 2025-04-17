@@ -1,5 +1,8 @@
 mod comps;
+mod entitites;
 mod game;
+mod input;
+mod render;
 mod sys;
 
 fn main() {
