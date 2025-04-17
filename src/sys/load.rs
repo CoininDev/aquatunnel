@@ -11,15 +11,16 @@ use sdl2::{
 #[system(for_each)]
 pub fn load(
     sprite: &Sprite,
-    #[resource] textures: &HashMap<String, Arc<Texture<'_>>>,
+    #[resource] textures: &mut HashMap<String, Arc<Texture<'static>>>,
     #[resource] texture_creator: &TextureCreator<WindowContext>,
 ) {
-    textures
-        .get(sprite.image_path.as_str())
-        .get_or_insert(&Arc::new(
-            texture_creator
-                .load_texture(sprite.image_path.as_str())
-                .unwrap(),
-        ));
+    if !textures.contains_key(&sprite.image_path) {
+        let tex = texture_creator
+            .load_texture(&sprite.image_path)
+            .expect("Erro ao carregar textura");
+        textures.insert(
+            sprite.image_path.clone(),
+            Arc::new(unsafe { std::mem::transmute(tex) }),
+        );
+    }
 }
-
