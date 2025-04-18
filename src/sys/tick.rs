@@ -63,10 +63,28 @@ pub fn move_player(
     transform.position += input_ctx.move_direction * player.speed * time.delta;
 
     match input_ctx.move_direction {
-        Vec2 { x: 1.0, .. } => anim_player.current_animation = "right".to_string(),
-        Vec2 { x: -1.0, .. } => anim_player.current_animation = "left".to_string(),
-        Vec2 { y: 1.0, .. } => anim_player.current_animation = "down".to_string(),
-        Vec2 { y: -1.0, .. } => anim_player.current_animation = "up".to_string(),
-        _ => anim_player.current_animation = "down".to_string(),
+        Vec2 { x: 1.0, .. } => {
+            anim_player.current_animation = "right".to_string();
+            anim_player.playing = true;
+        }
+        Vec2 { x: -1.0, .. } => {
+            anim_player.current_animation = "left".to_string();
+            anim_player.playing = true;
+        }
+        Vec2 { y: 1.0, .. } => {
+            anim_player.current_animation = "down".to_string();
+            anim_player.playing = true;
+        }
+        Vec2 { y: -1.0, .. } => {
+            anim_player.current_animation = "up".to_string();
+            anim_player.playing = true;
+        }
+        Vec2 { x: 0.0, y: 0.0 } => {
+            anim_player.current_animation = "down".to_string();
+            anim_player.playing = false;
+        }
+        _ => {
+            anim_player.playing = true;
+        }
     }
 }

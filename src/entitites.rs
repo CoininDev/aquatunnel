@@ -75,6 +75,6 @@ pub fn populate(world: &mut World) {
             playing: true,
             frame_duration: 0.1,
         },
-        Player { speed: 300.0 },
+        Player { speed: 100.0 },
     ));
 }
