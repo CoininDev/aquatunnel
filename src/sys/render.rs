@@ -13,7 +13,7 @@ use sdl2::{
     video::WindowContext,
 };
 
-use crate::comps::{DebugSprite, Sprite, Transform};
+use crate::comps::{AnimationPlayer, DebugSprite, Sprite, Spritesheet, Transform};
 
 #[system]
 pub fn clear_screen(#[resource] canvas: &mut WindowCanvas) {
@@ -57,6 +57,8 @@ pub fn draw_fps(
 #[read_component(Sprite)]
 #[read_component(Transform)]
 #[read_component(DebugSprite)]
+#[read_component(Spritesheet)]
+#[read_component(AnimationPlayer)]
 pub fn render(
     world: &mut SubWorld,
     #[resource] canvas: &mut WindowCanvas,
@@ -97,10 +99,52 @@ pub fn render(
             ))
             .unwrap();
     }
+
+    let mut anim_query = <(&Transform, &Spritesheet, &AnimationPlayer)>::query();
+    for (transform, spritesheet, player) in anim_query.iter_mut(world) {
+        let tex = textures.get(spritesheet.image_path.as_str());
+        let tex = tex.unwrap();
+
+        let rect = spritesheet
+            .animations
+            .get(player.current_animation.as_str())
+            .expect(
+                format!(
+                    "The animation '{}' does not exist in spritesheet.",
+                    player.current_animation,
+                )
+                .as_str(),
+            )
+            .get(player.current_frame)
+            .expect(
+                format!(
+                    "The position {} in animation {} is out of bounds.",
+                    player.current_frame, player.current_animation
+                )
+                .as_str(),
+            );
+        let dst = FRect::new(
+            transform.position.x,
+            transform.position.y,
+            rect.w as f32 * transform.scale.x,
+            rect.z as f32 * transform.scale.y,
+        );
+
+        canvas
+            .copy_ex_f(
+                tex.as_ref(),
+                Some(Rect::new(rect.x, rect.y, rect.w as u32, rect.z as u32)),
+                dst,
+                transform.rotation,
+                None,
+                false,
+                false,
+            )
+            .unwrap();
+    }
 }
 
 #[system]
 pub fn present(#[resource] canvas: &mut WindowCanvas) {
     canvas.present();
 }
-

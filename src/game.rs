@@ -7,7 +7,10 @@ use crate::{
     entitites::populate,
     input::{InputContext, InputSetup},
     render::init_sdl,
-    sys::{load::load_system, render, tick},
+    sys::{
+        load::{load_spritesheet_system, load_system},
+        render, tick,
+    },
 };
 
 pub struct Time {
@@ -16,7 +19,7 @@ pub struct Time {
 }
 
 pub fn run_game() -> Result<(), String> {
-    let (canvas, texture_creator, mut event_pump) = init_sdl()?;
+    let (canvas, texture_creator, event_pump) = init_sdl()?;
     let event_pump = Rc::new(RefCell::new(event_pump));
     let textures: HashMap<String, Arc<Texture<'_>>> = HashMap::new();
     let mut world = World::default();
@@ -40,10 +43,14 @@ pub fn run_game() -> Result<(), String> {
 
     populate(&mut world);
 
-    let mut load_schedule = Schedule::builder().add_thread_local(load_system()).build();
+    let mut load_schedule = Schedule::builder()
+        .add_thread_local(load_system())
+        .add_thread_local(load_spritesheet_system())
+        .build();
     let mut step_schedule = Schedule::builder()
         .add_system(tick::time_update_system())
         .add_thread_local(tick::input_update_system())
+        .add_system(tick::step_animation_system(0.0))
         .flush()
         .add_thread_local(tick::move_player_system())
         .build();

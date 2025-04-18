@@ -1,10 +1,11 @@
 use std::time::Instant;
 
+use glam::Vec2;
 use legion::{systems::CommandBuffer, world::SubWorld, *};
 use sdl2::{EventPump, event::Event, keyboard::Keycode, pixels::Color, rect::FPoint};
 
 use crate::{
-    comps::{DebugSprite, Player, Transform},
+    comps::{AnimationPlayer, DebugSprite, Player, Spritesheet, Transform},
     game::Time,
     input::InputContext,
 };
@@ -22,10 +23,50 @@ pub fn input_update(#[resource] input: &mut InputContext) {
 }
 
 #[system(for_each)]
+pub fn step_animation(
+    #[resource] time: &Time,
+    #[state] sprite_time: &mut f32,
+    player: &mut AnimationPlayer,
+    sheet: &Spritesheet,
+) {
+    if !player.playing {
+        return;
+    }
+
+    if *sprite_time >= player.frame_duration {
+        let anim_length = sheet
+            .animations
+            .get(player.current_animation.as_str())
+            .unwrap()
+            .len()
+            - 1;
+
+        if player.current_frame < anim_length {
+            player.current_frame += 1;
+        } else {
+            player.current_frame = 0;
+        }
+        *sprite_time = 0.0;
+    }
+    *sprite_time += time.delta;
+}
+
+#[system(for_each)]
 pub fn move_player(
     #[resource] input_ctx: &InputContext,
-    tranform: &mut Transform,
+    #[resource] time: &Time,
+    transform: &mut Transform,
+    spritesheet: &Spritesheet,
+    anim_player: &mut AnimationPlayer,
     player: &Player,
 ) {
-    tranform.position += input_ctx.move_direction * player.speed;
+    transform.position += input_ctx.move_direction * player.speed * time.delta;
+
+    match input_ctx.move_direction {
+        Vec2 { x: 1.0, .. } => anim_player.current_animation = "right".to_string(),
+        Vec2 { x: -1.0, .. } => anim_player.current_animation = "left".to_string(),
+        Vec2 { y: 1.0, .. } => anim_player.current_animation = "down".to_string(),
+        Vec2 { y: -1.0, .. } => anim_player.current_animation = "up".to_string(),
+        _ => anim_player.current_animation = "down".to_string(),
+    }
 }
