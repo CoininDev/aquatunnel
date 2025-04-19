@@ -53,6 +53,7 @@ pub fn draw_fps(
     *frames += 1;
 }
 
+const METERS_TO_PIXELS: f32 = 100.0; // 1 metro = 100 pixels
 #[system]
 #[read_component(Sprite)]
 #[read_component(Transform)]
@@ -68,18 +69,17 @@ pub fn render(
     for (sprite, transform) in sprite_query.iter(world) {
         let texture = textures.get(sprite.image_path.as_str()).unwrap();
 
-        let dst = FRect::new(
-            transform.position.x,
-            transform.position.y,
-            texture.query().width as f32 * transform.scale.x,
-            texture.query().height as f32 * transform.scale.y,
-        );
+        let sizex = texture.query().width as f32 * transform.scale.x;
+        let sizey = texture.query().height as f32 * transform.scale.y;
+        let px = transform.position.x * METERS_TO_PIXELS - (sizex / 2.0);
+        let py = transform.position.y * METERS_TO_PIXELS - (sizey / 2.0);
+        let dst = FRect::new(px, py, sizex, sizey);
         canvas
             .copy_ex_f(
                 texture.as_ref(),
                 None,
                 dst,
-                transform.rotation,
+                transform.rotation.into(),
                 None,
                 false,
                 false,
@@ -89,15 +89,12 @@ pub fn render(
 
     let mut debug_query = <(&DebugSprite, &Transform)>::query();
     for (sprite, transform) in debug_query.iter_mut(world) {
+        let sizex = sprite.size.x * transform.scale.x;
+        let sizey = sprite.size.y * transform.scale.y;
+        let px = transform.position.x * METERS_TO_PIXELS - (sizex / 2.0);
+        let py = transform.position.y * METERS_TO_PIXELS - (sizey / 2.0);
         canvas.set_draw_color(sprite.color);
-        canvas
-            .draw_frect(FRect::new(
-                transform.position.x,
-                transform.position.y,
-                sprite.size.x * transform.scale.x,
-                sprite.size.y * transform.scale.y,
-            ))
-            .unwrap();
+        canvas.draw_frect(FRect::new(px, py, sizex, sizey)).unwrap();
     }
 
     let mut anim_query = <(&Transform, &Spritesheet, &AnimationPlayer)>::query();
@@ -123,19 +120,19 @@ pub fn render(
                 )
                 .as_str(),
             );
-        let dst = FRect::new(
-            transform.position.x,
-            transform.position.y,
-            rect.w as f32 * transform.scale.x,
-            rect.z as f32 * transform.scale.y,
-        );
+
+        let sizex = rect.w as f32 * transform.scale.x;
+        let sizey = rect.z as f32 * transform.scale.y;
+        let px = transform.position.x * METERS_TO_PIXELS - (sizex / 2.0);
+        let py = transform.position.y * METERS_TO_PIXELS - (sizey / 2.0);
+        let dst = FRect::new(px, py, sizex, sizey);
 
         canvas
             .copy_ex_f(
                 tex.as_ref(),
                 Some(Rect::new(rect.x, rect.y, rect.w as u32, rect.z as u32)),
                 dst,
-                transform.rotation,
+                transform.rotation.into(),
                 None,
                 false,
                 false,

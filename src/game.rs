@@ -6,9 +6,10 @@ use sdl2::{EventPump, event::Event, keyboard::Keycode, render::Texture};
 use crate::{
     entitites::populate,
     input::{InputContext, InputSetup},
-    render::init_sdl,
+    physics::PhysicsContext,
+    window::init_sdl,
     sys::{
-        load::{load_spritesheet_system, load_system},
+        load::{load_physics_system, load_spritesheet_system, load_system},
         render, tick,
     },
 };
@@ -32,11 +33,13 @@ pub fn run_game() -> Result<(), String> {
     };
 
     let input_ctx = InputContext::new(event_pump.clone(), InputSetup::default());
+    let physics_ctx = PhysicsContext::default();
 
     resources.insert(textures);
     resources.insert(canvas);
     resources.insert(texture_creator);
     resources.insert(input_ctx);
+    resources.insert(physics_ctx);
     resources.insert(ttf_ctx);
     resources.insert(time);
     resources.insert(CommandBuffer::new(&world));
@@ -46,11 +49,14 @@ pub fn run_game() -> Result<(), String> {
     let mut load_schedule = Schedule::builder()
         .add_thread_local(load_system())
         .add_thread_local(load_spritesheet_system())
+        .add_system(load_physics_system())
         .build();
     let mut step_schedule = Schedule::builder()
         .add_system(tick::time_update_system())
         .add_thread_local(tick::input_update_system())
         .add_system(tick::step_animation_system(0.0))
+        .add_system(tick::step_physics_system())
+        .add_system(tick::physics_integration_system())
         .flush()
         .add_thread_local(tick::move_player_system())
         .build();

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::comps::*;
-use glam::IVec4;
+use glam::{IVec4, Vec2};
 use legion::World;
 use sdl2::{pixels::Color, rect::FPoint};
 
@@ -64,7 +64,10 @@ pub fn populate(world: &mut World) {
         ],
     );
     world.push((
-        Transform::default(),
+        Transform {
+            position: Vec2::new(4.0, 0.0),
+            ..Default::default()
+        },
         Spritesheet {
             image_path: "assets/C3ZwL.png".to_string(),
             animations: cu,
@@ -75,6 +78,22 @@ pub fn populate(world: &mut World) {
             playing: true,
             frame_duration: 0.1,
         },
-        Player { speed: 100.0 },
+        Player { speed: 1.0 },
+        DynamicBody::new(Vec2::new(0.64, 0.64)),
+        DebugSprite {
+            size: FPoint::new(64.0, 64.0),
+            color: Color::CYAN,
+        },
+    ));
+    world.push((
+        Transform {
+            position: Vec2::new(4.0, 5.0),
+            ..Default::default()
+        },
+        DebugSprite {
+            size: FPoint::new(6.0, 1.0),
+            color: Color::WHITE,
+        },
+        StaticBody::new(Vec2::new(6.0, 1.0)),
     ));
 }

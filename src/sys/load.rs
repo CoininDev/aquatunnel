@@ -1,7 +1,12 @@
 use std::{collections::HashMap, sync::Arc};
 
-use crate::comps::*;
-use legion::system;
+use crate::{comps::*, physics::PhysicsContext};
+use legion::{world::SubWorld, *};
+use rapier2d::{
+    na::vector,
+    parry::transformation::utils::transform,
+    prelude::{ColliderBuilder, RigidBodyBuilder},
+};
 use sdl2::{
     image::LoadTexture as _,
     render::{Texture, TextureCreator},
@@ -45,5 +50,51 @@ pub fn load_spritesheet(
             sprite.image_path.clone(),
             Arc::new(unsafe { std::mem::transmute(tex) }),
         );
+    }
+}
+
+#[system]
+#[write_component(DynamicBody)]
+#[write_component(StaticBody)]
+#[read_component(Transform)]
+pub fn load_physics(world: &mut SubWorld, #[resource] physics: &mut PhysicsContext) {
+    let mut dyn_query = <(&Transform, &mut DynamicBody)>::query();
+    for (transform, body) in dyn_query.iter_mut(world) {
+        let rb = RigidBodyBuilder::dynamic()
+            .translation(vector![transform.position.x, transform.position.y])
+            .rotation(transform.rotation as f32)
+            .build();
+
+        let handle = physics.bodies.insert(rb);
+        body.handle = Some(handle);
+        let collider = ColliderBuilder::cuboid(
+            body.size.x * transform.scale.x,
+            body.size.y * transform.scale.y,
+        )
+        .build();
+
+        physics
+            .colliders
+            .insert_with_parent(collider, handle, &mut physics.bodies);
+    }
+
+    let mut stt_query = <(&Transform, &mut StaticBody)>::query();
+    for (transform, body) in stt_query.iter_mut(world) {
+        let rb = RigidBodyBuilder::fixed()
+            .translation(vector![transform.position.x, transform.position.y])
+            .rotation(transform.rotation as f32)
+            .build();
+
+        let handle = physics.bodies.insert(rb);
+        body.handle = Some(handle);
+        let collider = ColliderBuilder::cuboid(
+            body.size.x * transform.scale.x,
+            body.size.y * transform.scale.y,
+        )
+        .build();
+
+        physics
+            .colliders
+            .insert_with_parent(collider, handle, &mut physics.bodies);
     }
 }

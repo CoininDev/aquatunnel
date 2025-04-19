@@ -2,12 +2,14 @@ use std::time::Instant;
 
 use glam::Vec2;
 use legion::{systems::CommandBuffer, world::SubWorld, *};
+use nalgebra::Vector2;
 use sdl2::{EventPump, event::Event, keyboard::Keycode, pixels::Color, rect::FPoint};
 
 use crate::{
-    comps::{AnimationPlayer, DebugSprite, Player, Spritesheet, Transform},
+    comps::{AnimationPlayer, DebugSprite, DynamicBody, Player, Spritesheet, Transform},
     game::Time,
     input::InputContext,
+    physics::{self, PhysicsContext},
 };
 
 #[system]
@@ -51,17 +53,58 @@ pub fn step_animation(
     *sprite_time += time.delta;
 }
 
+#[system]
+pub fn step_physics(#[resource] physics: &mut PhysicsContext) {
+    physics.pipeline.step(
+        &physics.gravity,
+        &physics.integration_params,
+        &mut physics.islands,
+        &mut physics.broad_phase,
+        &mut physics.narrow_phase,
+        &mut physics.bodies,
+        &mut physics.colliders,
+        &mut physics.impulse_joints,
+        &mut physics.multibody_joints,
+        &mut physics.ccd_solver,
+        None,
+        &mut physics.hooks,
+        &mut physics.events,
+    );
+}
+
+#[system(for_each)]
+pub fn physics_integration(
+    #[resource] physics: &mut PhysicsContext,
+    transform: &mut Transform,
+    body: &DynamicBody,
+) {
+    if let Some(b) = physics.bodies.get(body.handle.unwrap()) {
+        let t = b.translation();
+        let r = b.rotation();
+        transform.position = Vec2::new(t.x, t.y);
+        transform.rotation = r.angle();
+    }
+}
+
 #[system(for_each)]
 pub fn move_player(
     #[resource] input_ctx: &InputContext,
     #[resource] time: &Time,
+    #[resource] physics: &mut PhysicsContext,
     transform: &mut Transform,
-    spritesheet: &Spritesheet,
     anim_player: &mut AnimationPlayer,
+    body: &mut DynamicBody,
     player: &Player,
 ) {
-    transform.position += input_ctx.move_direction * player.speed * time.delta;
+    let dir = input_ctx.move_direction;
 
+    // --- Atualiza a velocidade do corpo no mundo físico ---
+    if let Some(rigid_body) = physics.bodies.get_mut(body.handle.unwrap()) {
+        let velocity = Vector2::new(dir.x * player.speed, dir.y * player.speed);
+        if velocity.magnitude() != 0.0 {
+            rigid_body.set_linvel(velocity, true);
+        }
+    }
     match input_ctx.move_direction {
         Vec2 { x: 1.0, .. } => {
             anim_player.current_animation = "right".to_string();

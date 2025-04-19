@@ -30,6 +30,7 @@ dependencies = [
  "anyhow",
  "glam",
  "legion",
+ "nalgebra",
  "rapier2d",
  "sdl2",
 ]

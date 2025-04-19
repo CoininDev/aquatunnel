@@ -2,7 +2,8 @@ mod comps;
 mod entitites;
 mod game;
 mod input;
-mod render;
+mod physics;
+mod window;
 mod sys;
 
 fn main() {
