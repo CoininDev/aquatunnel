@@ -1,15 +1,14 @@
 use std::time::Instant;
 
 use glam::Vec2;
-use legion::{systems::CommandBuffer, world::SubWorld, *};
+use legion::*;
 use nalgebra::Vector2;
-use sdl2::{EventPump, event::Event, keyboard::Keycode, pixels::Color, rect::FPoint};
 
 use crate::{
-    comps::{AnimationPlayer, DebugSprite, DynamicBody, Player, Spritesheet, Transform},
+    comps::{AnimationPlayer, DynamicBody, Player, Spritesheet, Transform},
     game::Time,
     input::InputContext,
-    physics::{self, PhysicsContext},
+    physics::PhysicsContext,
 };
 
 #[system]
@@ -89,9 +88,9 @@ pub fn physics_integration(
 #[system(for_each)]
 pub fn move_player(
     #[resource] input_ctx: &InputContext,
-    #[resource] time: &Time,
+    //#[resource] time: &Time,
     #[resource] physics: &mut PhysicsContext,
-    transform: &mut Transform,
+    //transform: &mut Transform,
     anim_player: &mut AnimationPlayer,
     body: &mut DynamicBody,
     player: &Player,

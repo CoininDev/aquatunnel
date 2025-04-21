@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use glam::{IVec4, Vec2, vec2};
-use legion::storage::Component;
 use rapier2d::prelude::{ColliderHandle, RigidBodyHandle};
 use sdl2::{pixels::Color, rect::FPoint};
 

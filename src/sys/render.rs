@@ -4,6 +4,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+use glam::Vec2;
 use legion::{world::SubWorld, *};
 use sdl2::{
     pixels::Color,
@@ -13,7 +14,7 @@ use sdl2::{
     video::WindowContext,
 };
 
-use crate::comps::{AnimationPlayer, DebugSprite, Sprite, Spritesheet, Transform};
+use crate::comps::{AnimationPlayer, DebugSprite, DynamicBody, Sprite, Spritesheet, StaticBody, Transform};
 
 #[system]
 pub fn clear_screen(#[resource] canvas: &mut WindowCanvas) {
@@ -53,13 +54,26 @@ pub fn draw_fps(
     *frames += 1;
 }
 
-const METERS_TO_PIXELS: f32 = 100.0; // 1 metro = 100 pixels
+const METERS_TO_PIXELS: f32 = 50.0; // 1 metro = 100 pixels
+fn calculate_dst(position:Vec2, size:Vec2, scale:Vec2) -> FRect {
+    // Corrigindo os cálculos de tamanho
+    let sizex = size.x * scale.x * METERS_TO_PIXELS;
+    let sizey = size.y * scale.y * METERS_TO_PIXELS;
+
+    // Corrigindo os cálculos de posição
+    let px = (position.x * METERS_TO_PIXELS) - (sizex / 2.0);
+    let py = (position.y * METERS_TO_PIXELS) - (sizey / 2.0);
+    
+    FRect::new(px, py, sizex, sizey)
+}
 #[system]
 #[read_component(Sprite)]
 #[read_component(Transform)]
 #[read_component(DebugSprite)]
 #[read_component(Spritesheet)]
 #[read_component(AnimationPlayer)]
+#[read_component(DynamicBody)]
+#[read_component(StaticBody)]
 pub fn render(
     world: &mut SubWorld,
     #[resource] canvas: &mut WindowCanvas,
@@ -68,12 +82,8 @@ pub fn render(
     let mut sprite_query = <(&Sprite, &Transform)>::query();
     for (sprite, transform) in sprite_query.iter(world) {
         let texture = textures.get(sprite.image_path.as_str()).unwrap();
-
-        let sizex = texture.query().width as f32 * transform.scale.x;
-        let sizey = texture.query().height as f32 * transform.scale.y;
-        let px = transform.position.x * METERS_TO_PIXELS - (sizex / 2.0);
-        let py = transform.position.y * METERS_TO_PIXELS - (sizey / 2.0);
-        let dst = FRect::new(px, py, sizex, sizey);
+        let texquery = texture.query();
+        let dst = calculate_dst(transform.position, Vec2::new(texquery.width as f32, texquery.height as f32), transform.scale);
         canvas
             .copy_ex_f(
                 texture.as_ref(),
@@ -87,59 +97,68 @@ pub fn render(
             .unwrap();
     }
 
-    let mut debug_query = <(&DebugSprite, &Transform)>::query();
-    for (sprite, transform) in debug_query.iter_mut(world) {
-        let sizex = sprite.size.x * transform.scale.x;
-        let sizey = sprite.size.y * transform.scale.y;
-        let px = transform.position.x * METERS_TO_PIXELS - (sizex / 2.0);
-        let py = transform.position.y * METERS_TO_PIXELS - (sizey / 2.0);
-        canvas.set_draw_color(sprite.color);
-        canvas.draw_frect(FRect::new(px, py, sizex, sizey)).unwrap();
+    // let mut debug_query = <(&DebugSprite, &Transform)>::query();
+    // for (sprite, transform) in debug_query.iter_mut(world) {
+    //     let sizex = sprite.size.x * transform.scale.x * METERS_TO_PIXELS;
+    //     let sizey = sprite.size.y * transform.scale.y * METERS_TO_PIXELS;
+    //     let px = transform.position.x * METERS_TO_PIXELS - (sizex / 2.0);
+    //     let py = transform.position.y * METERS_TO_PIXELS - (sizey / 2.0);
+    //     canvas.set_draw_color(sprite.color);
+    //     canvas.draw_frect(FRect::new(px, py, sizex, sizey)).unwrap();
+    // }
+
+    // let mut anim_query = <(&Transform, &Spritesheet, &AnimationPlayer)>::query();
+    // for (transform, spritesheet, player) in anim_query.iter_mut(world) {
+    //     let tex = textures.get(spritesheet.image_path.as_str());
+    //     let tex = tex.unwrap();
+
+    //     let rect = spritesheet
+    //         .animations
+    //         .get(player.current_animation.as_str())
+    //         .expect(
+    //             format!(
+    //                 "The animation '{}' does not exist in spritesheet.",
+    //                 player.current_animation,
+    //             )
+    //             .as_str(),
+    //         )
+    //         .get(player.current_frame)
+    //         .expect(
+    //             format!(
+    //                 "The position {} in animation {} is out of bounds.",
+    //                 player.current_frame, player.current_animation
+    //             )
+    //             .as_str(),
+    //         );
+    //     // rect width and height are already in pixels format, so we need to revert to meters before passing it to calculate_dst
+    //     let dst = calculate_dst(transform.position, Vec2::new(rect.w as f32 / METERS_TO_PIXELS, rect.z as f32 / METERS_TO_PIXELS), transform.scale);
+
+    //     canvas
+    //         .copy_ex_f(
+    //             tex.as_ref(),
+    //             Some(Rect::new(rect.x, rect.y, rect.w as u32, rect.z as u32)),
+    //             dst,
+    //             transform.rotation.into(),
+    //             None,
+    //             false,
+    //             false,
+    //         )
+    //         .unwrap();
+    // }
+
+    // DEBUG
+    let mut phys_query = <(&Transform, &DynamicBody)>::query();
+    for (transform, body) in phys_query.iter(world) {
+        canvas.set_draw_color(Color::CYAN);
+        canvas.draw_frect(calculate_dst(transform.position, Vec2::new(body.size.x, body.size.y), transform.scale)).unwrap();
     }
 
-    let mut anim_query = <(&Transform, &Spritesheet, &AnimationPlayer)>::query();
-    for (transform, spritesheet, player) in anim_query.iter_mut(world) {
-        let tex = textures.get(spritesheet.image_path.as_str());
-        let tex = tex.unwrap();
-
-        let rect = spritesheet
-            .animations
-            .get(player.current_animation.as_str())
-            .expect(
-                format!(
-                    "The animation '{}' does not exist in spritesheet.",
-                    player.current_animation,
-                )
-                .as_str(),
-            )
-            .get(player.current_frame)
-            .expect(
-                format!(
-                    "The position {} in animation {} is out of bounds.",
-                    player.current_frame, player.current_animation
-                )
-                .as_str(),
-            );
-
-        let sizex = rect.w as f32 * transform.scale.x;
-        let sizey = rect.z as f32 * transform.scale.y;
-        let px = transform.position.x * METERS_TO_PIXELS - (sizex / 2.0);
-        let py = transform.position.y * METERS_TO_PIXELS - (sizey / 2.0);
-        let dst = FRect::new(px, py, sizex, sizey);
-
-        canvas
-            .copy_ex_f(
-                tex.as_ref(),
-                Some(Rect::new(rect.x, rect.y, rect.w as u32, rect.z as u32)),
-                dst,
-                transform.rotation.into(),
-                None,
-                false,
-                false,
-            )
-            .unwrap();
+    let mut phys_query = <(&Transform, &StaticBody)>::query();
+    for (transform, body) in phys_query.iter(world) {
+        canvas.set_draw_color(Color::MAGENTA);
+        canvas.draw_frect(calculate_dst(transform.position, Vec2::new(body.size.x, body.size.y), transform.scale)).unwrap();
     }
-}
+} 
 
 #[system]
 pub fn present(#[resource] canvas: &mut WindowCanvas) {

@@ -4,7 +4,6 @@ use crate::{comps::*, physics::PhysicsContext};
 use legion::{world::SubWorld, *};
 use rapier2d::{
     na::vector,
-    parry::transformation::utils::transform,
     prelude::{ColliderBuilder, RigidBodyBuilder},
 };
 use sdl2::{
@@ -92,6 +91,10 @@ pub fn load_physics(world: &mut SubWorld, #[resource] physics: &mut PhysicsConte
             body.size.y * transform.scale.y,
         )
         .build();
+        println!("{}, {}", 
+            body.size.x * transform.scale.x,
+            body.size.y * transform.scale.y,
+        );
 
         physics
             .colliders
