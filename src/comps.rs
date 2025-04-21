@@ -41,6 +41,7 @@ pub struct DebugSprite {
 pub struct Spritesheet {
     pub animations: HashMap<String, Vec<IVec4>>,
     pub image_path: String,
+    pub dst_size: Vec2,
 }
 
 #[derive(Clone, Debug, PartialEq)]

@@ -6,7 +6,8 @@ use legion::World;
 use sdl2::{pixels::Color, rect::FPoint};
 
 pub fn populate(world: &mut World) {
-    let cu = animations();
+    let player_anims = animations();
+    //player
     world.push((
         Transform {
             position: Vec2::new(4.0, 0.0),
@@ -14,7 +15,8 @@ pub fn populate(world: &mut World) {
         },
         Spritesheet {
             image_path: "assets/C3ZwL.png".to_string(),
-            animations: cu,
+            animations: player_anims,
+            dst_size: Vec2::new(1.0, 1.0),
         },
         AnimationPlayer {
             current_animation: String::from("right"),
@@ -29,6 +31,7 @@ pub fn populate(world: &mut World) {
             color: Color::CYAN,
         },
     ));
+    //ground
     world.push((
         Transform {
             position: Vec2::new(4.0, 5.0),

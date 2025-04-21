@@ -54,7 +54,7 @@ pub fn draw_fps(
     *frames += 1;
 }
 
-const METERS_TO_PIXELS: f32 = 50.0; // 1 metro = 100 pixels
+const METERS_TO_PIXELS: f32 = 100.0; // 1 metro = 100 pixels
 fn calculate_dst(position:Vec2, size:Vec2, scale:Vec2) -> FRect {
     // Corrigindo os cálculos de tamanho
     let sizex = size.x * scale.x * METERS_TO_PIXELS;
@@ -107,44 +107,44 @@ pub fn render(
     //     canvas.draw_frect(FRect::new(px, py, sizex, sizey)).unwrap();
     // }
 
-    // let mut anim_query = <(&Transform, &Spritesheet, &AnimationPlayer)>::query();
-    // for (transform, spritesheet, player) in anim_query.iter_mut(world) {
-    //     let tex = textures.get(spritesheet.image_path.as_str());
-    //     let tex = tex.unwrap();
+    let mut anim_query = <(&Transform, &Spritesheet, &AnimationPlayer)>::query();
+    for (transform, spritesheet, player) in anim_query.iter_mut(world) {
+        let tex = textures.get(spritesheet.image_path.as_str());
+        let tex = tex.unwrap();
 
-    //     let rect = spritesheet
-    //         .animations
-    //         .get(player.current_animation.as_str())
-    //         .expect(
-    //             format!(
-    //                 "The animation '{}' does not exist in spritesheet.",
-    //                 player.current_animation,
-    //             )
-    //             .as_str(),
-    //         )
-    //         .get(player.current_frame)
-    //         .expect(
-    //             format!(
-    //                 "The position {} in animation {} is out of bounds.",
-    //                 player.current_frame, player.current_animation
-    //             )
-    //             .as_str(),
-    //         );
-    //     // rect width and height are already in pixels format, so we need to revert to meters before passing it to calculate_dst
-    //     let dst = calculate_dst(transform.position, Vec2::new(rect.w as f32 / METERS_TO_PIXELS, rect.z as f32 / METERS_TO_PIXELS), transform.scale);
+        let rect = spritesheet
+            .animations
+            .get(player.current_animation.as_str())
+            .expect(
+                format!(
+                    "The animation '{}' does not exist in spritesheet.",
+                    player.current_animation,
+                )
+                .as_str(),
+            )
+            .get(player.current_frame)
+            .expect(
+                format!(
+                    "The position {} in animation {} is out of bounds.",
+                    player.current_frame, player.current_animation
+                )
+                .as_str(),
+            );
+        // rect width and height are already in pixels format, so we need to revert to meters before passing it to calculate_dst
+        let dst = calculate_dst(transform.position, spritesheet.dst_size, transform.scale);
 
-    //     canvas
-    //         .copy_ex_f(
-    //             tex.as_ref(),
-    //             Some(Rect::new(rect.x, rect.y, rect.w as u32, rect.z as u32)),
-    //             dst,
-    //             transform.rotation.into(),
-    //             None,
-    //             false,
-    //             false,
-    //         )
-    //         .unwrap();
-    // }
+        canvas
+            .copy_ex_f(
+                tex.as_ref(),
+                Some(Rect::new(rect.x, rect.y, rect.w as u32, rect.z as u32)),
+                dst,
+                transform.rotation.into(),
+                None,
+                false,
+                false,
+            )
+            .unwrap();
+    }
 
     // DEBUG
     let mut phys_query = <(&Transform, &DynamicBody)>::query();
