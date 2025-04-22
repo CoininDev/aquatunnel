@@ -16,7 +16,7 @@ pub fn populate(world: &mut World) {
         Spritesheet {
             image_path: "assets/C3ZwL.png".to_string(),
             animations: player_anims,
-            dst_size: Vec2::new(1.0, 1.0),
+            dst_size: Vec2::new(0.64, 0.64),
         },
         AnimationPlayer {
             current_animation: String::from("right"),

@@ -22,7 +22,7 @@ impl Default for PhysicsContext {
             pipeline: PhysicsPipeline::new(),
             bodies: RigidBodySet::default(),
             colliders: ColliderSet::default(),
-            gravity: vector![0.0, 9.81],
+            gravity: vector![0.0, 1.0],
             islands: IslandManager::default(),
             impulse_joints: ImpulseJointSet::default(),
             multibody_joints: MultibodyJointSet::default(),

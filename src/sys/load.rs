@@ -67,8 +67,8 @@ pub fn load_physics(world: &mut SubWorld, #[resource] physics: &mut PhysicsConte
         let handle = physics.bodies.insert(rb);
         body.handle = Some(handle);
         let collider = ColliderBuilder::cuboid(
-            body.size.x * transform.scale.x,
-            body.size.y * transform.scale.y,
+            body.size.x,// * transform.scale.x,
+            body.size.y,// * transform.scale.y,
         )
         .build();
 
@@ -87,8 +87,8 @@ pub fn load_physics(world: &mut SubWorld, #[resource] physics: &mut PhysicsConte
         let handle = physics.bodies.insert(rb);
         body.handle = Some(handle);
         let collider = ColliderBuilder::cuboid(
-            body.size.x * transform.scale.x,
-            body.size.y * transform.scale.y,
+            body.size.x,// * transform.scale.x,
+            body.size.y,// * transform.scale.y,
         )
         .build();
         println!("{}, {}", 
