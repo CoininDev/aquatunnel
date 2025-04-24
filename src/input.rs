@@ -1,66 +1,58 @@
-use std::{
-    cell::RefCell,
-    collections::{HashMap, VecDeque},
-    rc::Rc,
-};
+use std::collections::{HashMap, VecDeque};
 
-use glam::Vec2;
-use sdl2::{EventPump, event::Event, keyboard::Keycode};
-
+use macroquad::math::Vec2;
+use macroquad::input::{is_key_down, KeyCode, MouseButton};
+use macroquad::input::mouse_position;
+use macroquad::window::screen_width;
 pub struct InputContext {
     pub move_direction: Vec2,
     pub look_direction: Vec2,
     pub actions: VecDeque<InputAction>,
-    setup: InputSetup,
-    event_pump: Rc<RefCell<EventPump>>,
+    pub setup: InputSetup,
 }
 
 impl InputContext {
-    pub fn new(event_pump: Rc<RefCell<EventPump>>, setup: InputSetup) -> Self {
+    pub fn new(setup: InputSetup) -> Self {
         InputContext {
             move_direction: Vec2::ZERO,
             look_direction: Vec2::ZERO,
             actions: VecDeque::new(),
             setup,
-            event_pump,
         }
     }
 
     pub fn update(&mut self) {
-        // Essa função deve ler inputs brutos e atualizar as informações move_direction,
-        // look_direction e actions, para serem exportadas à lógica do jogo.
-
-        for event in self.event_pump.borrow_mut().poll_iter() {
-            match event {
-                Event::KeyDown {
-                    keycode: Some(k), ..
-                } => {
-                    if let Some(action) = self.setup.keybindings.get(&RawAction::Key(k)) {
-                        self.actions.push_back(action.clone());
-                    }
-                }
-
-                _ => {}
-            }
-        }
-
         match self.setup.move_method {
             0 => self.move_direction = self.method_0(),
+            1 => self.move_direction = self.method_1(),
+            _ => {}
+        }
+
+        match self.setup.look_method {
+            0 => self.look_direction = self.method_0(),
+            1 => self.look_direction = self.method_1(),
             _ => {}
         }
     }
 
     fn method_0(&self) -> Vec2 {
-        let event_pump_ref = self.event_pump.borrow_mut();
-        let keyboard_state = event_pump_ref.keyboard_state();
         // -A +D
-        let x_signal = -(keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::A) as i32)
-            + (keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::D) as i32);
+        let x_signal = -(is_key_down(KeyCode::A) as i32)
+            + (is_key_down(KeyCode::D) as i32);
         // -W +S
-        let y_signal = -(keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::W) as i32)
-            + (keyboard_state.is_scancode_pressed(sdl2::keyboard::Scancode::S) as i32);
+        let y_signal = -(is_key_down(KeyCode::W) as i32)
+            + (is_key_down(KeyCode::S) as i32);
 
         Vec2::new(x_signal as f32, y_signal as f32).normalize_or_zero()
+    }
+
+    fn method_1(&self) -> Vec2 {
+        let (mouse_x, mouse_y) = mouse_position();
+        let center_x = screen_width() / 2.0;
+        let center_y = screen_width() / 2.0;
+
+        let direction = Vec2::new(mouse_x - center_x, mouse_y - center_y);
+        direction.normalize_or_zero()
     }
 }
 
@@ -69,13 +61,15 @@ pub enum InputAction {
     DebugAction,
 }
 
-#[derive(PartialEq, Eq, Hash)]
+#[derive(PartialEq, Eq, Hash, Clone)]
 pub enum RawAction {
-    Key(Keycode),
+    Key(KeyCode),
+    MouseButton(MouseButton),
 }
 
+#[derive(Clone)]
 pub struct InputSetup {
-    keybindings: HashMap<RawAction, InputAction>,
+    pub keybindings: HashMap<RawAction, InputAction>,
     move_method: u8,
     look_method: u8,
 }
@@ -83,7 +77,8 @@ pub struct InputSetup {
 impl Default for InputSetup {
     fn default() -> Self {
         let mut keybindings = HashMap::new();
-        keybindings.insert(RawAction::Key(Keycode::D), InputAction::DebugAction);
+        keybindings.insert(RawAction::Key(KeyCode::D), InputAction::DebugAction);
+        keybindings.insert(RawAction::MouseButton(MouseButton::Left), InputAction::DebugAction);
 
         InputSetup {
             keybindings,

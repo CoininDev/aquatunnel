@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
 use crate::comps::*;
-use glam::{IVec4, Vec2};
 use legion::World;
-use sdl2::{pixels::Color, rect::FPoint};
+use macroquad::{color, math::{IVec4, Vec2}};
 
 pub fn populate(world: &mut World) {
     let player_anims = animations();
@@ -27,8 +26,8 @@ pub fn populate(world: &mut World) {
         Player { speed: 1.0 },
         DynamicBody::new(Vec2::new(0.32, 0.64)),
         DebugSprite {
-            size: FPoint::new(0.32, 0.64),
-            color: Color::CYAN,
+            size: Vec2::new(0.32, 0.64),
+            color: color::SKYBLUE,
         },
     ));
     //ground
@@ -39,8 +38,8 @@ pub fn populate(world: &mut World) {
         },
         StaticBody::new(Vec2::new(1.0, 1.0)),
         DebugSprite {
-            size: FPoint::new(1.0, 1.0),
-            color: Color::WHITE,
+            size: Vec2::new(1.0, 1.0),
+            color: color::WHITE,
         },
     ));
 }

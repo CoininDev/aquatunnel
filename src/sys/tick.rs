@@ -1,13 +1,12 @@
 use std::time::Instant;
-
-use glam::Vec2;
 use legion::*;
+use macroquad::{input::{is_key_down, is_mouse_button_down}, math::Vec2};
 use nalgebra::Vector2;
 
 use crate::{
     comps::{AnimationPlayer, DynamicBody, Player, Spritesheet, Transform},
     game::Time,
-    input::InputContext,
+    input::{InputContext, RawAction},
     physics::PhysicsContext,
 };
 
@@ -21,6 +20,17 @@ pub fn time_update(#[resource] time: &mut Time) {
 #[system]
 pub fn input_update(#[resource] input: &mut InputContext) {
     input.update();
+
+    for (k, a) in input.setup.keybindings.clone() {
+        match k {
+            RawAction::Key(k) => {
+                if is_key_down(k){ input.actions.push_front(a); }
+            },
+            RawAction::MouseButton(b) => {
+                if is_mouse_button_down(b) { input.actions.push_front(a); }
+            }
+        }
+    }
 }
 
 #[system(for_each)]

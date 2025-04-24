@@ -1,8 +1,6 @@
 use std::collections::HashMap;
-
-use glam::{IVec4, Vec2, vec2};
+use macroquad::{color::Color, math::{vec2, IVec4, Vec2}};
 use rapier2d::prelude::{ColliderHandle, RigidBodyHandle};
-use sdl2::{pixels::Color, rect::FPoint};
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Transform {
@@ -33,7 +31,7 @@ pub struct Sprite {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct DebugSprite {
-    pub size: FPoint,
+    pub size: Vec2,
     pub color: Color,
 }
 

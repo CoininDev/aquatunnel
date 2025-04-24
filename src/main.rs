@@ -3,11 +3,11 @@ mod entitites;
 mod game;
 mod input;
 mod physics;
-mod window;
 mod sys;
 
-fn main() {
-    if let Err(err) = game::run_game() {
+#[macroquad::main("Lo")]
+async fn main() {
+    if let Err(err) = game::run_game().await {
         println!("{}", err);
     }
 }

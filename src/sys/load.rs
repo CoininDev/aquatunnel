@@ -1,53 +1,53 @@
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{comps::*, physics::PhysicsContext};
-use legion::{world::SubWorld, *};
+use legion::{query::*, system, world::SubWorld, World};
+use macroquad::texture::{load_texture, Texture2D};
 use rapier2d::{
     na::vector,
     prelude::{ColliderBuilder, RigidBodyBuilder},
 };
-use sdl2::{
-    image::LoadTexture as _,
-    render::{Texture, TextureCreator},
-    video::WindowContext,
-};
 
 #[system(for_each)]
-pub fn load(
+pub async fn load(
     sprite: &Sprite,
-    #[resource] textures: &mut HashMap<String, Arc<Texture<'static>>>,
-    #[resource] texture_creator: &TextureCreator<WindowContext>,
+    #[resource] textures: &mut HashMap<String, Arc<Texture2D>>,
 ) {
     if !textures.contains_key(&sprite.image_path) {
         println!("cadastrando sprite '{}' em textures", sprite.image_path);
 
-        let tex = texture_creator
-            .load_texture(&sprite.image_path)
-            .expect("Erro ao carregar textura");
+        let tex = match load_texture(&sprite.image_path).await {
+            Ok(texture) => texture,
+            Err(e) => {
+                eprintln!("Erro ao carregar textura '{}': {:?}", sprite.image_path, e);
+                return;
+            }
+        };
         textures.insert(
             sprite.image_path.clone(),
-            Arc::new(unsafe { std::mem::transmute(tex) }),
+            Arc::new(tex),
         );
     }
 }
 
 #[system(for_each)]
-pub fn load_spritesheet(
+pub async fn load_spritesheet(
     sprite: &Spritesheet,
-    #[resource] textures: &mut HashMap<String, Arc<Texture<'static>>>,
-    #[resource] texture_creator: &TextureCreator<WindowContext>,
+    #[resource] textures: &mut HashMap<String, Arc<Texture2D>>,
 ) {
     if !textures.contains_key(&sprite.image_path) {
-        println!(
-            "cadastrando spritesheet '{}' em textures",
-            sprite.image_path
-        );
-        let tex = texture_creator
-            .load_texture(&sprite.image_path)
-            .expect("Erro ao carregar textura");
+        println!("cadastrando sprite '{}' em textures", sprite.image_path);
+
+        let tex = match load_texture(&sprite.image_path).await {
+            Ok(texture) => texture,
+            Err(e) => {
+                eprintln!("Erro ao carregar textura '{}': {:?}", sprite.image_path, e);
+                return;
+            }
+        };
         textures.insert(
             sprite.image_path.clone(),
-            Arc::new(unsafe { std::mem::transmute(tex) }),
+            Arc::new(tex),
         );
     }
 }
