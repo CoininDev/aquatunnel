@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use crate::comps::*;
 use legion::World;
-use macroquad::{color, math::{IVec4, Vec2}};
+use macroquad::{
+    color,
+    math::{IVec4, Vec2},
+};
 
 pub fn populate(world: &mut World) {
     let player_anims = animations();
@@ -23,13 +26,14 @@ pub fn populate(world: &mut World) {
             playing: true,
             frame_duration: 0.1,
         },
-        Player { speed: 1.0 },
+        Player { speed: 0.1 },
         DynamicBody::new(Vec2::new(0.32, 0.64)),
         // DebugSprite {
         //     size: Vec2::new(0.32, 0.64),
         //     color: color::SKYBLUE,
         // },
     ));
+
     //ground
     world.push((
         Transform {
@@ -104,4 +108,3 @@ fn animations() -> HashMap<String, Vec<IVec4>> {
     );
     cu
 }
-

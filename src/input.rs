@@ -1,9 +1,10 @@
 use std::collections::{HashMap, VecDeque};
 
-use macroquad::math::Vec2;
-use macroquad::input::{is_key_down, KeyCode, MouseButton};
 use macroquad::input::mouse_position;
+use macroquad::input::{KeyCode, MouseButton, is_key_down};
+use macroquad::math::Vec2;
 use macroquad::window::screen_width;
+
 pub struct InputContext {
     pub move_direction: Vec2,
     pub look_direction: Vec2,
@@ -37,11 +38,9 @@ impl InputContext {
 
     fn method_0(&self) -> Vec2 {
         // -A +D
-        let x_signal = -(is_key_down(KeyCode::A) as i32)
-            + (is_key_down(KeyCode::D) as i32);
+        let x_signal = -(is_key_down(KeyCode::A) as i32) + (is_key_down(KeyCode::D) as i32);
         // -W +S
-        let y_signal = -(is_key_down(KeyCode::W) as i32)
-            + (is_key_down(KeyCode::S) as i32);
+        let y_signal = -(is_key_down(KeyCode::W) as i32) + (is_key_down(KeyCode::S) as i32);
 
         Vec2::new(x_signal as f32, y_signal as f32).normalize_or_zero()
     }
@@ -78,7 +77,10 @@ impl Default for InputSetup {
     fn default() -> Self {
         let mut keybindings = HashMap::new();
         keybindings.insert(RawAction::Key(KeyCode::D), InputAction::DebugAction);
-        keybindings.insert(RawAction::MouseButton(MouseButton::Left), InputAction::DebugAction);
+        keybindings.insert(
+            RawAction::MouseButton(MouseButton::Left),
+            InputAction::DebugAction,
+        );
 
         InputSetup {
             keybindings,

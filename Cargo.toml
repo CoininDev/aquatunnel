@@ -5,6 +5,7 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.97"
+futures = "0.3.31"
 legion = "0.4.0"
 macroquad = "0.4.14"
 nalgebra = "0.33.2"

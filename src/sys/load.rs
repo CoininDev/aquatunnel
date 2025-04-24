@@ -2,16 +2,14 @@ use std::{collections::HashMap, sync::Arc};
 
 use crate::{comps::*, physics::PhysicsContext};
 use legion::{query::*, system, world::SubWorld};
-use macroquad::texture::{load_texture, Texture2D};
+use macroquad::texture::{Texture2D, load_texture};
 use rapier2d::{
     na::vector,
     prelude::{ColliderBuilder, RigidBodyBuilder},
 };
 
-pub async fn load(
-    sprite: &Sprite,
-    textures: &mut HashMap<String, Arc<Texture2D>>,
-) {
+//OBSOLETO!!!!
+pub async fn load(sprite: &Sprite, textures: &mut HashMap<String, Arc<Texture2D>>) {
     if !textures.contains_key(&sprite.image_path) {
         println!("cadastrando sprite '{}' em textures", sprite.image_path);
 
@@ -22,19 +20,20 @@ pub async fn load(
                 return;
             }
         };
-        textures.insert(
-            sprite.image_path.clone(),
-            Arc::new(tex),
-        );
+        textures.insert(sprite.image_path.clone(), Arc::new(tex));
     }
 }
 
+//OBSOLETO!!!!
 pub async fn load_spritesheet(
     sprite: &Spritesheet,
     textures: &mut HashMap<String, Arc<Texture2D>>,
 ) {
     if !textures.contains_key(&sprite.image_path) {
-        println!("cadastrando spritesheet '{}' em textures", sprite.image_path);
+        println!(
+            "cadastrando spritesheet '{}' em textures",
+            sprite.image_path
+        );
 
         let tex = match load_texture(&sprite.image_path).await {
             Ok(texture) => texture,
@@ -43,10 +42,7 @@ pub async fn load_spritesheet(
                 return;
             }
         };
-        textures.insert(
-            sprite.image_path.clone(),
-            Arc::new(tex),
-        );
+        textures.insert(sprite.image_path.clone(), Arc::new(tex));
     }
 }
 
@@ -65,8 +61,8 @@ pub fn load_physics(world: &mut SubWorld, #[resource] physics: &mut PhysicsConte
         let handle = physics.bodies.insert(rb);
         body.handle = Some(handle);
         let collider = ColliderBuilder::cuboid(
-            body.size.x,// * transform.scale.x,
-            body.size.y,// * transform.scale.y,
+            body.size.x, // * transform.scale.x,
+            body.size.y, // * transform.scale.y,
         )
         .build();
 
@@ -85,15 +81,14 @@ pub fn load_physics(world: &mut SubWorld, #[resource] physics: &mut PhysicsConte
         let handle = physics.bodies.insert(rb);
         body.handle = Some(handle);
         let collider = ColliderBuilder::cuboid(
-            body.size.x,// * transform.scale.x,
-            body.size.y,// * transform.scale.y,
+            body.size.x, // * transform.scale.x,
+            body.size.y, // * transform.scale.y,
         )
         .build();
-        //println!("{}, {}", 
+        //println!("{}, {}",
         //    body.size.x * transform.scale.x,
         //    body.size.y * transform.scale.y,
         //);
-
 
         physics
             .colliders

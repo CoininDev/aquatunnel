@@ -1,15 +1,18 @@
-use std::collections::HashMap;
-use macroquad::{color::Color, math::{vec2, IVec4, Vec2}};
+use macroquad::{
+    color::Color,
+    math::{IVec4, Vec2, vec2},
+};
 use rapier2d::prelude::{ColliderHandle, RigidBodyHandle};
+use std::collections::HashMap;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Transform {
     pub position: Vec2,
     pub scale: Vec2,
     pub rotation: f32,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Player {
     pub speed: f32,
 }
@@ -24,25 +27,25 @@ impl Default for Transform {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Sprite {
     pub image_path: String,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DebugSprite {
     pub size: Vec2,
     pub color: Color,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Spritesheet {
     pub animations: HashMap<String, Vec<IVec4>>,
     pub image_path: String,
     pub dst_size: Vec2,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct AnimationPlayer {
     pub current_animation: String,
     pub current_frame: usize,
@@ -50,14 +53,14 @@ pub struct AnimationPlayer {
     pub frame_duration: f32,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct DynamicBody {
     pub handle: Option<RigidBodyHandle>,
     pub collider_handle: Option<ColliderHandle>,
     pub size: Vec2,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct StaticBody {
     pub handle: Option<RigidBodyHandle>,
     pub collider_handle: Option<ColliderHandle>,
