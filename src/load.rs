@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use futures::future::join_all;
-use legion::{Resources, World, query::*, world::SubWorld};
+use legion::{Resources, World, query::*};
 use macroquad::texture::{Texture2D, load_texture};
 
 use crate::comps::{Sprite, Spritesheet};

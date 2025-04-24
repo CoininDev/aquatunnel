@@ -1,5 +1,5 @@
 use legion::{world::SubWorld, *};
-use macroquad::{color::*, math::*, prelude::*, window::*, *};
+use macroquad::{color::*, math::*, prelude::*};
 use std::{collections::HashMap, sync::Arc};
 
 use crate::comps::{

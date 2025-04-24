@@ -5,14 +5,11 @@ use macroquad::{
     math::Vec2,
     text::{draw_text, get_text_center},
 };
-use nalgebra::Vector2;
-use std::time::Instant;
 
 use crate::{
-    comps::{AnimationPlayer, DynamicBody, Player, Spritesheet, Transform},
+    comps::{AnimationPlayer, Player, Spritesheet, Transform},
     game::Time,
     input::{InputContext, RawAction},
-    physics::PhysicsContext,
 };
 
 #[system]

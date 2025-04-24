@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc, time::Instant};
+use std::{collections::HashMap, sync::Arc};
 
 use legion::{Resources, Schedule, World, systems::CommandBuffer};
 use macroquad::{
