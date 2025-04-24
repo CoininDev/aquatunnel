@@ -41,7 +41,7 @@ pub async fn run_game() -> Result<(), String> {
     let mut load_schedule = Schedule::builder()
         .add_thread_local(load_system())
         .add_thread_local(load_spritesheet_system())
-        .add_system(load_physics_system())
+        .add_thread_local(load_physics_system())
         .build();
 
     let mut step_schedule = Schedule::builder()
@@ -73,4 +73,9 @@ pub async fn run_game() -> Result<(), String> {
     }
 
     Ok(())
+}
+
+
+fn load_schedule(){
+    
 }

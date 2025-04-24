@@ -8,16 +8,16 @@ use crate::comps::{AnimationPlayer, DebugSprite, DynamicBody, Sprite, Spriteshee
 
 #[system]
 pub fn clear_screen() {
-    clear_background(BLACK);
+    clear_background(DARKPURPLE);
 }
 
 #[system]
 pub fn draw_fps() {
     draw_text(
         format!("FPS: {}", get_fps()).as_str(), 
-        0., 
-        0., 
-        12.,
+        4., 
+        24., 
+        24.,
         WHITE);
 }
 
@@ -70,18 +70,17 @@ pub fn render(
         );
     }
 
-    // let mut debug_query = <(&DebugSprite, &Transform)>::query();
-    // for (sprite, transform) in debug_query.iter_mut(world) {
-    //     let sizex = sprite.size.x * transform.scale.x * METERS_TO_PIXELS;
-    //     let sizey = sprite.size.y * transform.scale.y * METERS_TO_PIXELS;
-    //     let px = transform.position.x * METERS_TO_PIXELS - (sizex / 2.0);
-    //     let py = transform.position.y * METERS_TO_PIXELS - (sizey / 2.0);
-    //     canvas.set_draw_color(sprite.color);
-    //     canvas.draw_frect(FRect::new(px, py, sizex, sizey)).unwrap();
-    // }
+    let mut debug_query = <(&DebugSprite, &Transform)>::query();
+    for (sprite, transform) in debug_query.iter_mut(world) {
+        let dst = calculate_dst(transform.position, sprite.size, transform.scale);
+        //println!("a{:?}", dst);
+        draw_rectangle(dst.x, dst.y, dst.w, dst.h, sprite.color);
+        draw_circle(dst.x + (dst.w / 2.), dst.y + (dst.h /2.), 4., BLACK);
+    }
 
     let mut anim_query = <(&Transform, &Spritesheet, &AnimationPlayer)>::query();
     for (transform, spritesheet, player) in anim_query.iter_mut(world) {
+        //println!("Escala: {:?}", transform.scale);
         let texture = textures.get(spritesheet.image_path.as_str());
         let texture = match texture{
             Some(t) => t,
@@ -101,6 +100,7 @@ pub fn render(
         // rect width and height are already in pixels format, so we need to revert to meters before passing it to calculate_dst
         let dst = calculate_dst(transform.position, spritesheet.dst_size, transform.scale);
 
+        
         draw_texture_ex(
             &texture, 
             dst.x, 
@@ -120,15 +120,16 @@ pub fn render(
     let mut phys_query = <(&Transform, &DynamicBody)>::query();
     for (transform, body) in phys_query.iter(world) {
         let dst = calculate_dst(transform.position, body.size, Vec2::ONE);
+        //println!("a{:?}", dst);
         draw_rectangle_ex(
             dst.x, 
             dst.y, 
             dst.w, 
             dst.h, 
-            DrawRectangleParams { 
-                rotation: transform.rotation,
-                color: color::SKYBLUE,
-                ..Default::default()
+            DrawRectangleParams {
+                rotation:transform.rotation,
+                color:color::SKYBLUE, 
+                offset: Vec2::ZERO
             }
         );
     }
@@ -143,7 +144,7 @@ pub fn render(
             DrawRectangleParams { 
                 rotation: transform.rotation,
                 color: color::MAGENTA,
-                ..Default::default()
+                offset: Vec2::new(0.5,0.5)
             }
         );
     }

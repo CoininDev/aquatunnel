@@ -25,10 +25,10 @@ pub fn populate(world: &mut World) {
         },
         Player { speed: 1.0 },
         DynamicBody::new(Vec2::new(0.32, 0.64)),
-        DebugSprite {
-            size: Vec2::new(0.32, 0.64),
-            color: color::SKYBLUE,
-        },
+        // DebugSprite {
+        //     size: Vec2::new(0.32, 0.64),
+        //     color: color::SKYBLUE,
+        // },
     ));
     //ground
     world.push((

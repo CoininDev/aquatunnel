@@ -1,17 +1,16 @@
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{comps::*, physics::PhysicsContext};
-use legion::{query::*, system, world::SubWorld, World};
+use legion::{query::*, system, world::SubWorld};
 use macroquad::texture::{load_texture, Texture2D};
 use rapier2d::{
     na::vector,
     prelude::{ColliderBuilder, RigidBodyBuilder},
 };
 
-#[system(for_each)]
 pub async fn load(
     sprite: &Sprite,
-    #[resource] textures: &mut HashMap<String, Arc<Texture2D>>,
+    textures: &mut HashMap<String, Arc<Texture2D>>,
 ) {
     if !textures.contains_key(&sprite.image_path) {
         println!("cadastrando sprite '{}' em textures", sprite.image_path);
@@ -30,13 +29,12 @@ pub async fn load(
     }
 }
 
-#[system(for_each)]
 pub async fn load_spritesheet(
     sprite: &Spritesheet,
-    #[resource] textures: &mut HashMap<String, Arc<Texture2D>>,
+    textures: &mut HashMap<String, Arc<Texture2D>>,
 ) {
     if !textures.contains_key(&sprite.image_path) {
-        println!("cadastrando sprite '{}' em textures", sprite.image_path);
+        println!("cadastrando spritesheet '{}' em textures", sprite.image_path);
 
         let tex = match load_texture(&sprite.image_path).await {
             Ok(texture) => texture,
@@ -91,10 +89,11 @@ pub fn load_physics(world: &mut SubWorld, #[resource] physics: &mut PhysicsConte
             body.size.y,// * transform.scale.y,
         )
         .build();
-        println!("{}, {}", 
-            body.size.x * transform.scale.x,
-            body.size.y * transform.scale.y,
-        );
+        //println!("{}, {}", 
+        //    body.size.x * transform.scale.x,
+        //    body.size.y * transform.scale.y,
+        //);
+
 
         physics
             .colliders
