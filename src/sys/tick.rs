@@ -64,11 +64,12 @@ pub fn step_animation(
 #[system(for_each)]
 pub fn move_player(
     #[resource] input_ctx: &mut InputContext,
+    #[resource] time: &Time,
     transform: &mut Transform,
     player: &Player,
 ) {
     let dir = input_ctx.move_direction;
-    transform.position += dir * player.speed;
+    transform.position += dir * player.speed * time.delta;
 }
 
 #[system(for_each)]

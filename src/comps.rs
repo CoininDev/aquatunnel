@@ -2,7 +2,6 @@ use macroquad::{
     color::Color,
     math::{IVec4, Vec2, vec2},
 };
-use rapier2d::prelude::{ColliderHandle, RigidBodyHandle};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -30,12 +29,14 @@ impl Default for Transform {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Sprite {
     pub image_path: String,
+    pub z_order: f32,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DebugSprite {
     pub size: Vec2,
     pub color: Color,
+    pub z_order: f32,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -43,6 +44,7 @@ pub struct Spritesheet {
     pub animations: HashMap<String, Vec<IVec4>>,
     pub image_path: String,
     pub dst_size: Vec2,
+    pub z_order: f32,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -51,38 +53,4 @@ pub struct AnimationPlayer {
     pub current_frame: usize,
     pub playing: bool,
     pub frame_duration: f32,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct DynamicBody {
-    pub handle: Option<RigidBodyHandle>,
-    pub collider_handle: Option<ColliderHandle>,
-    pub size: Vec2,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct StaticBody {
-    pub handle: Option<RigidBodyHandle>,
-    pub collider_handle: Option<ColliderHandle>,
-    pub size: Vec2,
-}
-
-impl DynamicBody {
-    pub fn new(size: Vec2) -> Self {
-        DynamicBody {
-            handle: None,
-            collider_handle: None,
-            size,
-        }
-    }
-}
-
-impl StaticBody {
-    pub fn new(size: Vec2) -> Self {
-        StaticBody {
-            handle: None,
-            collider_handle: None,
-            size,
-        }
-    }
 }

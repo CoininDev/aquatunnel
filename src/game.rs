@@ -12,8 +12,7 @@ use crate::{
     entitites::populate,
     input::{InputContext, InputSetup},
     load::load,
-    physics::PhysicsContext,
-    sys::{load::load_physics_system, render, tick},
+    sys::{render, tick},
 };
 
 pub struct Time {
@@ -26,24 +25,20 @@ pub async fn run_game() -> Result<(), String> {
     let mut resources = Resources::default();
 
     let input_ctx = InputContext::new(InputSetup::default());
-    let physics_ctx = PhysicsContext::default();
 
     resources.insert(textures);
     resources.insert(input_ctx);
-    resources.insert(physics_ctx);
     resources.insert(CommandBuffer::new(&world));
 
     populate(&mut world);
 
-    let mut load_schedule = Schedule::builder()
-        .add_thread_local(load_physics_system())
-        .build();
-
+    // Systems involving macroquad rendering or input requires local thread
     let mut step_schedule = Schedule::builder()
         .add_thread_local(tick::input_update_system())
         .add_system(tick::step_animation_system(0.0))
+        .add_system(render::z_y_axis_player_system())
         .flush()
-        .add_thread_local(tick::move_player_system())
+        .add_system(tick::move_player_system())
         .add_thread_local(tick::animate_player_system())
         .build();
 
@@ -54,7 +49,6 @@ pub async fn run_game() -> Result<(), String> {
         .build();
 
     load(&mut world, &mut resources).await;
-    load_schedule.execute(&mut world, &mut resources);
     'running: loop {
         let dt = Time {
             delta: get_frame_time(),
@@ -73,4 +67,3 @@ pub async fn run_game() -> Result<(), String> {
 
     Ok(())
 }
-
