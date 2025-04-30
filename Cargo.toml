@@ -5,9 +5,8 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.97"
-glam = "0.30.1"
+futures = "0.3.31"
 legion = "0.4.0"
-miniquad = "0.4.8"
+macroquad = "0.4.14"
 nalgebra = "0.33.2"
 rapier2d = "0.24.0"
-sdl2 = {version = "0.37.0", features = ["ttf", "image"]}

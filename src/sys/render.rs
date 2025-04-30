@@ -1,61 +1,69 @@
-use std::{
-    collections::HashMap,
-    sync::Arc,
-    time::{Duration, Instant},
-};
-
-use glam::Vec2;
 use legion::{world::SubWorld, *};
-use sdl2::{
-    pixels::Color,
-    rect::{FRect, Rect},
-    render::{Texture, TextureCreator, WindowCanvas},
-    ttf::Sdl2TtfContext,
-    video::WindowContext,
+use macroquad::{
+    color::{self, *},
+    math::*,
+    prelude::*,
+};
+use std::{collections::HashMap, sync::Arc};
+
+use crate::{
+    comps::{AnimationPlayer, DebugSprite, Player, Sprite, Spritesheet, Transform},
+    game::{Time, Track},
 };
 
-use crate::comps::{AnimationPlayer, DebugSprite, DynamicBody, Sprite, Spritesheet, StaticBody, Transform};
-
 #[system]
-pub fn clear_screen(#[resource] canvas: &mut WindowCanvas) {
-    canvas.set_draw_color(Color::BLACK);
-    canvas.clear();
+pub fn clear_screen() {
+    clear_background(DARKPURPLE);
 }
 
 #[system]
-pub fn draw_fps(
-    #[resource] canvas: &mut WindowCanvas,
-    #[resource] texture_creator: &mut TextureCreator<WindowContext>,
-    #[resource] ttf_ctx: &Arc<Sdl2TtfContext>,
-    #[state] frames: &mut u32,
-    #[state] fps: &mut String,
-    #[state] last_time: &mut Instant,
+pub fn draw_fps() {
+    draw_text(format!("FPS: {}", get_fps()).as_str(), 4., 24., 24., WHITE);
+}
+
+#[system(for_each)]
+pub fn z_y_axis_player(spritesheet: &mut Spritesheet, transform: &Transform) {
+    spritesheet.z_order = transform.position.y;
+    //println!("{}", spritesheet.z_order);
+}
+
+fn lerp(from: f32, to: f32, t: f32) -> f32 {
+    from + (to - from) * t
+}
+fn lerp_vec2(from: Vec2, to: Vec2, t: f32) -> Vec2 {
+    Vec2::new(lerp(from.x, to.x, t), lerp(from.y, to.y, t))
+}
+
+const SMOOTHING_FACTOR: f32 = 10.0;
+#[system]
+pub fn camera(
+    #[resource] time: &Time,
+    #[resource] camera: &mut Box<Camera2D>,
+    #[resource] track: &Track,
 ) {
-    let elapsed = last_time.elapsed();
-    //println!("{}", elapsed.as_micros());
-    if elapsed >= Duration::from_secs(1) {
-        *fps = frames.clone().to_string();
-        *frames = 0;
-        *last_time = Instant::now();
-    }
-
-    let font = ttf_ctx
-        .load_font("/usr/share/fonts/ubuntu/Ubuntu-M.ttf", 12)
-        .unwrap();
-    let surface = font
-        .render(format!("FPS: {}", fps).as_str())
-        .blended(Color::WHITE)
-        .unwrap();
-    let texture = texture_creator
-        .create_texture_from_surface(surface)
-        .unwrap();
-    let dst = Rect::new(0, 0, texture.query().width, texture.query().height);
-    canvas.copy(&texture, None, Some(dst)).unwrap();
-    *frames += 1;
+    camera.target = lerp_vec2(
+        camera.target,
+        track.pos * METERS_TO_PIXELS,
+        time.delta * SMOOTHING_FACTOR,
+    );
+    camera.zoom = vec2(2.0 / screen_width(), 2.0 / screen_height());
+    set_camera(camera.as_ref());
 }
 
+#[system]
+pub fn camera_ui() {
+    set_default_camera();
+}
+
+#[system(for_each)]
+pub fn track_player(#[resource] track: &mut Track, _: &Player, t: &Transform) {
+    track.pos = t.position;
+    println!("Player: {}", t.position);
+}
+
+// ---- RENDER SYSTEM ----
 const METERS_TO_PIXELS: f32 = 100.0; // 1 metro = 100 pixels
-fn calculate_dst(position:Vec2, size:Vec2, scale:Vec2) -> FRect {
+fn calculate_dst(position: Vec2, size: Vec2, scale: Vec2) -> Rect {
     // Corrigindo os cálculos de tamanho
     let sizex = size.x * scale.x * METERS_TO_PIXELS;
     let sizey = size.y * scale.y * METERS_TO_PIXELS;
@@ -63,104 +71,152 @@ fn calculate_dst(position:Vec2, size:Vec2, scale:Vec2) -> FRect {
     // Corrigindo os cálculos de posição
     let px = (position.x * METERS_TO_PIXELS) - (sizex / 2.0);
     let py = (position.y * METERS_TO_PIXELS) - (sizey / 2.0);
-    
-    FRect::new(px, py, sizex, sizey)
+
+    Rect::new(px, py, sizex, sizey)
 }
+
+trait Renderable {
+    fn z_order(&self) -> f32;
+    fn render(&self, transform: &Transform, textures: &HashMap<String, Arc<Texture2D>>);
+}
+
+impl Renderable for Sprite {
+    fn z_order(&self) -> f32 {
+        self.z_order
+    }
+
+    fn render(&self, transform: &Transform, textures: &HashMap<String, Arc<Texture2D>>) {
+        let texture = textures.get(self.image_path.as_str());
+        let texture = match texture {
+            Some(t) => t,
+            None => {
+                eprintln!("Erro textura");
+                return;
+            }
+        };
+        let dst = calculate_dst(
+            transform.position,
+            Vec2::new(texture.width() as f32, texture.height() as f32) / METERS_TO_PIXELS,
+            transform.scale,
+        );
+        draw_texture_ex(
+            &texture,
+            dst.x,
+            dst.y,
+            WHITE,
+            DrawTextureParams {
+                dest_size: Some(macroquad::math::Vec2::new(dst.w, dst.h)),
+                rotation: transform.rotation,
+                pivot: Some(macroquad::math::Vec2::new(dst.w / 2., dst.h / 2.)),
+                ..Default::default()
+            },
+        );
+    }
+}
+
+impl Renderable for (&Spritesheet, &AnimationPlayer) {
+    fn z_order(&self) -> f32 {
+        self.0.z_order
+    }
+
+    fn render(&self, transform: &Transform, textures: &HashMap<String, Arc<Texture2D>>) {
+        let texture = textures.get(self.0.image_path.as_str());
+        let texture = match texture {
+            Some(t) => t,
+            None => {
+                eprintln!("Erro textura");
+                return;
+            }
+        };
+
+        let rect = self
+            .0
+            .animations
+            .get(self.1.current_animation.as_str())
+            .expect("Animation not found")
+            .get(self.1.current_frame)
+            .expect("Animation frame out of bounds");
+        let rect = Rect::new(rect.x as f32, rect.y as f32, rect.w as f32, rect.z as f32);
+        let dst = calculate_dst(transform.position, self.0.dst_size, transform.scale);
+
+        draw_texture_ex(
+            &texture,
+            dst.x,
+            dst.y,
+            WHITE,
+            DrawTextureParams {
+                dest_size: Some(macroquad::math::Vec2::new(dst.w, dst.h)),
+                source: Some(rect),
+                rotation: transform.rotation,
+                pivot: Some(macroquad::math::Vec2::new(dst.w / 2., dst.h / 2.)),
+                ..Default::default()
+            },
+        );
+    }
+}
+
+impl Renderable for DebugSprite {
+    fn z_order(&self) -> f32 {
+        self.z_order
+    }
+
+    fn render(&self, transform: &Transform, textures: &HashMap<String, Arc<Texture2D>>) {
+        let dst = calculate_dst(transform.position, self.size, transform.scale);
+        draw_rectangle_ex(
+            dst.x,
+            dst.y,
+            dst.w,
+            dst.h,
+            DrawRectangleParams {
+                offset: Vec2::ZERO,
+                rotation: transform.rotation,
+                color: self.color,
+            },
+        );
+    }
+}
+
 #[system]
 #[read_component(Sprite)]
 #[read_component(Transform)]
 #[read_component(DebugSprite)]
 #[read_component(Spritesheet)]
 #[read_component(AnimationPlayer)]
-#[read_component(DynamicBody)]
-#[read_component(StaticBody)]
-pub fn render(
-    world: &mut SubWorld,
-    #[resource] canvas: &mut WindowCanvas,
-    #[resource] textures: &HashMap<String, Arc<Texture<'_>>>,
-) {
+pub fn render(world: &mut SubWorld, #[resource] textures: &HashMap<String, Arc<Texture2D>>) {
+    let mut renderables: Vec<(&Transform, &dyn Renderable)> = Vec::new();
+
+    //Registering
     let mut sprite_query = <(&Sprite, &Transform)>::query();
     for (sprite, transform) in sprite_query.iter(world) {
-        let texture = textures.get(sprite.image_path.as_str()).unwrap();
-        let texquery = texture.query();
-        let dst = calculate_dst(transform.position, Vec2::new(texquery.width as f32, texquery.height as f32), transform.scale);
-        canvas
-            .copy_ex_f(
-                texture.as_ref(),
-                None,
-                dst,
-                transform.rotation.into(),
-                None,
-                false,
-                false,
-            )
-            .unwrap();
+        renderables.push((transform, sprite));
     }
 
-    // let mut debug_query = <(&DebugSprite, &Transform)>::query();
-    // for (sprite, transform) in debug_query.iter_mut(world) {
-    //     let sizex = sprite.size.x * transform.scale.x * METERS_TO_PIXELS;
-    //     let sizey = sprite.size.y * transform.scale.y * METERS_TO_PIXELS;
-    //     let px = transform.position.x * METERS_TO_PIXELS - (sizex / 2.0);
-    //     let py = transform.position.y * METERS_TO_PIXELS - (sizey / 2.0);
-    //     canvas.set_draw_color(sprite.color);
-    //     canvas.draw_frect(FRect::new(px, py, sizex, sizey)).unwrap();
-    // }
+    let mut animated_storage: Vec<(&Transform, (&Spritesheet, &AnimationPlayer))> = Vec::new();
+    let mut animated_query = <(&Transform, &Spritesheet, &AnimationPlayer)>::query();
+    for (t, s, p) in animated_query.iter(world) {
+        animated_storage.push((t, (s, p)));
+    }
+    animated_storage
+        .iter()
+        .for_each(|(t, c)| renderables.push((t, c)));
 
-    let mut anim_query = <(&Transform, &Spritesheet, &AnimationPlayer)>::query();
-    for (transform, spritesheet, player) in anim_query.iter_mut(world) {
-        let tex = textures.get(spritesheet.image_path.as_str());
-        let tex = tex.unwrap();
-
-        let rect = spritesheet
-            .animations
-            .get(player.current_animation.as_str())
-            .expect(
-                format!(
-                    "The animation '{}' does not exist in spritesheet.",
-                    player.current_animation,
-                )
-                .as_str(),
-            )
-            .get(player.current_frame)
-            .expect(
-                format!(
-                    "The position {} in animation {} is out of bounds.",
-                    player.current_frame, player.current_animation
-                )
-                .as_str(),
-            );
-        // rect width and height are already in pixels format, so we need to revert to meters before passing it to calculate_dst
-        let dst = calculate_dst(transform.position, spritesheet.dst_size, transform.scale);
-
-        canvas
-            .copy_ex_f(
-                tex.as_ref(),
-                Some(Rect::new(rect.x, rect.y, rect.w as u32, rect.z as u32)),
-                dst,
-                transform.rotation.into(),
-                None,
-                false,
-                false,
-            )
-            .unwrap();
+    let mut debug_query = <(&Transform, &DebugSprite)>::query();
+    for (transform, sprite) in debug_query.iter(world) {
+        renderables.push((transform, sprite));
     }
 
-    // DEBUG
-    let mut phys_query = <(&Transform, &DynamicBody)>::query();
-    for (transform, body) in phys_query.iter(world) {
-        canvas.set_draw_color(Color::CYAN);
-        canvas.draw_frect(calculate_dst(transform.position, Vec2::new(body.size.x, body.size.y), transform.scale)).unwrap();
-    }
+    renderables.sort_by(|a, b| {
+        let (_, x) = a;
+        let az = x.z_order();
+        let (_, x) = b;
+        let bz = x.z_order();
 
-    let mut phys_query = <(&Transform, &StaticBody)>::query();
-    for (transform, body) in phys_query.iter(world) {
-        canvas.set_draw_color(Color::MAGENTA);
-        canvas.draw_frect(calculate_dst(transform.position, Vec2::new(body.size.x, body.size.y), transform.scale)).unwrap();
-    }
-} 
+        az.total_cmp(&bz)
+    });
 
-#[system]
-pub fn present(#[resource] canvas: &mut WindowCanvas) {
-    canvas.present();
+    //Rendering
+    for renderable in renderables.iter() {
+        let (transform, comp) = renderable;
+        comp.render(&transform, &textures);
+    }
 }
