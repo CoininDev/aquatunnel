@@ -7,6 +7,17 @@ use macroquad::{
     math::{IVec4, Vec2},
 };
 
+/// Populates the game world with player and ground entities, including their components and animations.
+///
+/// Adds a player entity with position, spritesheet, animation, and movement speed, as well as a ground entity with a debug sprite for visualization.
+///
+/// # Examples
+///
+/// ```
+/// let mut world = World::default();
+/// populate(&mut world);
+/// // The world now contains a player and a ground entity.
+/// ```
 pub fn populate(world: &mut World) {
     let player_anims = animations();
     //player
@@ -49,6 +60,17 @@ pub fn populate(world: &mut World) {
     ));
 }
 
+/// Returns a mapping of animation names to their frame rectangles for a spritesheet.
+///
+/// The returned hashmap contains four keys: "up", "left", "down", and "right". Each key maps to a vector of `IVec4` rectangles representing the pixel coordinates and size of each animation frame in the spritesheet. Each animation consists of 9 frames arranged horizontally, with each direction offset vertically by 64 pixels.
+///
+/// # Examples
+///
+/// ```
+/// let anims = animations();
+/// assert!(anims.contains_key("up"));
+/// assert_eq!(anims["right"].len(), 9);
+/// ```
 fn animations() -> HashMap<String, Vec<IVec4>> {
     let mut cu = HashMap::new();
     cu.insert(

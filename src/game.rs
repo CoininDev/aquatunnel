@@ -29,6 +29,20 @@ pub struct Track {
     pub pos: Vec2,
 }
 
+/// Runs the main asynchronous game loop, handling initialization, input, updates, and rendering.
+///
+/// Initializes game resources, sets up the ECS world and schedules, loads assets, and enters a frame-by-frame loop that processes input, updates game state, renders the scene, and checks for exit conditions. The loop continues until the Escape key is pressed.
+///
+/// # Returns
+///
+/// Returns `Ok(())` when the game loop exits normally, or an error string if initialization fails.
+///
+/// # Examples
+///
+/// ```no_run
+/// // To start the game loop in an async context:
+/// macroquad::prelude::start(run_game);
+/// ```
 pub async fn run_game() -> Result<(), String> {
     let textures: HashMap<String, Arc<Texture2D>> = HashMap::new();
     let mut world = World::default();

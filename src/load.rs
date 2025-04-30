@@ -6,6 +6,20 @@ use macroquad::texture::{Texture2D, load_texture};
 
 use crate::comps::{Sprite, Spritesheet};
 
+/// Asynchronously loads textures required by `Sprite` and `Spritesheet` components into the shared texture map.
+///
+/// This function scans all entities in the world for `Sprite` and `Spritesheet` components, identifies image paths not yet loaded,
+/// and loads the corresponding textures concurrently. Loaded textures are inserted into the shared texture map with nearest-neighbor filtering applied.
+///
+/// # Examples
+///
+/// ```
+/// # use legion::World;
+/// # use legion::Resources;
+/// # async fn example(mut world: World, mut resources: Resources) {
+/// load(&mut world, &mut resources).await;
+/// # }
+/// ```
 pub async fn load(world: &mut World, resources: &mut Resources) {
     let mut textures = resources
         .get_mut::<HashMap<String, Arc<Texture2D>>>()

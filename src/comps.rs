@@ -17,6 +17,16 @@ pub struct Player {
 }
 
 impl Default for Transform {
+    /// Returns a `Transform` with position at the origin, unit scale, and zero rotation.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// let t = Transform::default();
+    /// assert_eq!(t.position, vec2(0.0, 0.0));
+    /// assert_eq!(t.scale, vec2(1.0, 1.0));
+    /// assert_eq!(t.rotation, 0.0);
+    /// ```
     fn default() -> Transform {
         Transform {
             position: vec2(0.0, 0.0),
