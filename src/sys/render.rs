@@ -48,13 +48,6 @@ pub fn camera(
     );
     camera.zoom = vec2(2.0 / screen_width(), 2.0 / screen_height());
     set_camera(camera.as_ref());
-    //set_camera(&Camera2D {
-    //rotation: camera.transform.rotation,
-    //zoom: vec2(2.0 / screen_width(), 2.0 / screen_height()) / camera.transform.scale,
-    //target: position,
-    //viewport: Some((400, 0, 400, 0)),
-    //..Default::default()
-    //});
 }
 
 #[system]
@@ -69,13 +62,6 @@ pub fn track_player(#[resource] track: &mut Track, _: &Player, t: &Transform) {
 }
 
 // ---- RENDER SYSTEM ----
-
-enum RenderComp {
-    Sprite(Sprite),
-    AnimatedSprite(Spritesheet, AnimationPlayer),
-    DebugSprite(DebugSprite),
-}
-
 const METERS_TO_PIXELS: f32 = 100.0; // 1 metro = 100 pixels
 fn calculate_dst(position: Vec2, size: Vec2, scale: Vec2) -> Rect {
     // Corrigindo os cálculos de tamanho
@@ -88,6 +74,108 @@ fn calculate_dst(position: Vec2, size: Vec2, scale: Vec2) -> Rect {
 
     Rect::new(px, py, sizex, sizey)
 }
+
+trait Renderable {
+    fn z_order(&self) -> f32;
+    fn render(&self, transform: &Transform, textures: &HashMap<String, Arc<Texture2D>>);
+}
+
+impl Renderable for Sprite {
+    fn z_order(&self) -> f32 {
+        self.z_order
+    }
+
+    fn render(&self, transform: &Transform, textures: &HashMap<String, Arc<Texture2D>>) {
+        let texture = textures.get(self.image_path.as_str());
+        let texture = match texture {
+            Some(t) => t,
+            None => {
+                eprintln!("Erro textura");
+                return;
+            }
+        };
+        let dst = calculate_dst(
+            transform.position,
+            Vec2::new(texture.width() as f32, texture.height() as f32) / METERS_TO_PIXELS,
+            transform.scale,
+        );
+        draw_texture_ex(
+            &texture,
+            dst.x,
+            dst.y,
+            WHITE,
+            DrawTextureParams {
+                dest_size: Some(macroquad::math::Vec2::new(dst.w, dst.h)),
+                rotation: transform.rotation,
+                pivot: Some(macroquad::math::Vec2::new(dst.w / 2., dst.h / 2.)),
+                ..Default::default()
+            },
+        );
+    }
+}
+
+impl Renderable for (&Spritesheet, &AnimationPlayer) {
+    fn z_order(&self) -> f32 {
+        self.0.z_order
+    }
+
+    fn render(&self, transform: &Transform, textures: &HashMap<String, Arc<Texture2D>>) {
+        let texture = textures.get(self.0.image_path.as_str());
+        let texture = match texture {
+            Some(t) => t,
+            None => {
+                eprintln!("Erro textura");
+                return;
+            }
+        };
+
+        let rect = self
+            .0
+            .animations
+            .get(self.1.current_animation.as_str())
+            .expect("Animation not found")
+            .get(self.1.current_frame)
+            .expect("Animation frame out of bounds");
+        let rect = Rect::new(rect.x as f32, rect.y as f32, rect.w as f32, rect.z as f32);
+        let dst = calculate_dst(transform.position, self.0.dst_size, transform.scale);
+
+        draw_texture_ex(
+            &texture,
+            dst.x,
+            dst.y,
+            WHITE,
+            DrawTextureParams {
+                dest_size: Some(macroquad::math::Vec2::new(dst.w, dst.h)),
+                source: Some(rect),
+                rotation: transform.rotation,
+                pivot: Some(macroquad::math::Vec2::new(dst.w / 2., dst.h / 2.)),
+                ..Default::default()
+            },
+        );
+    }
+}
+
+impl Renderable for DebugSprite {
+    fn z_order(&self) -> f32 {
+        self.z_order
+    }
+
+    fn render(&self, transform: &Transform, textures: &HashMap<String, Arc<Texture2D>>) {
+        let dst = calculate_dst(transform.position, self.size, transform.scale);
+        draw_rectangle_ex(
+            dst.x,
+            dst.y,
+            dst.w,
+            dst.h,
+            DrawRectangleParams {
+                offset: Vec2::ZERO,
+                rotation: transform.rotation,
+                color: self.color,
+            },
+        );
+    }
+}
+
 #[system]
 #[read_component(Sprite)]
 #[read_component(Transform)]
@@ -95,42 +183,33 @@ fn calculate_dst(position: Vec2, size: Vec2, scale: Vec2) -> Rect {
 #[read_component(Spritesheet)]
 #[read_component(AnimationPlayer)]
 pub fn render(world: &mut SubWorld, #[resource] textures: &HashMap<String, Arc<Texture2D>>) {
-    //Grid
-    //draw_grid(100, 100., color::BLUE, color::RED);
-    draw_grid(10, 100.0, color::WHITE, color::RED);
-
-    let mut renderables: Vec<(Transform, RenderComp)> = Vec::new();
+    let mut renderables: Vec<(&Transform, &dyn Renderable)> = Vec::new();
 
     //Registering
     let mut sprite_query = <(&Sprite, &Transform)>::query();
     for (sprite, transform) in sprite_query.iter(world) {
-        renderables.push((transform.clone(), RenderComp::Sprite(sprite.clone())));
+        renderables.push((transform, sprite));
     }
+
+    let mut animated_storage: Vec<(&Transform, (&Spritesheet, &AnimationPlayer))> = Vec::new();
     let mut animated_query = <(&Transform, &Spritesheet, &AnimationPlayer)>::query();
-    for (transform, spritesheet, player) in animated_query.iter(world) {
-        renderables.push((
-            transform.clone(),
-            RenderComp::AnimatedSprite(spritesheet.clone(), player.clone()),
-        ));
+    for (t, s, p) in animated_query.iter(world) {
+        animated_storage.push((t, (s, p)));
     }
+    animated_storage
+        .iter()
+        .for_each(|(t, c)| renderables.push((t, c)));
+
     let mut debug_query = <(&Transform, &DebugSprite)>::query();
     for (transform, sprite) in debug_query.iter(world) {
-        renderables.push((transform.clone(), RenderComp::DebugSprite(sprite.clone())));
+        renderables.push((transform, sprite));
     }
 
     renderables.sort_by(|a, b| {
         let (_, x) = a;
-        let az: f32 = match x {
-            RenderComp::Sprite(s) => s.z_order,
-            RenderComp::DebugSprite(s) => s.z_order,
-            RenderComp::AnimatedSprite(s, _) => s.z_order,
-        };
+        let az = x.z_order();
         let (_, x) = b;
-        let bz: f32 = match x {
-            RenderComp::Sprite(s) => s.z_order,
-            RenderComp::DebugSprite(s) => s.z_order,
-            RenderComp::AnimatedSprite(s, _) => s.z_order,
-        };
+        let bz = x.z_order();
 
         az.total_cmp(&bz)
     });
@@ -138,74 +217,6 @@ pub fn render(world: &mut SubWorld, #[resource] textures: &HashMap<String, Arc<T
     //Rendering
     for renderable in renderables.iter() {
         let (transform, comp) = renderable;
-        match comp {
-            RenderComp::Sprite(sprite) => {
-                let texture = textures.get(sprite.image_path.as_str());
-                let texture = match texture {
-                    Some(t) => t,
-                    None => {
-                        eprintln!("Erro textura");
-                        return;
-                    }
-                };
-                let dst = calculate_dst(
-                    transform.position,
-                    Vec2::new(texture.width() as f32, texture.height() as f32) / METERS_TO_PIXELS,
-                    transform.scale,
-                );
-
-                draw_texture_ex(
-                    &texture,
-                    dst.x,
-                    dst.y,
-                    WHITE,
-                    DrawTextureParams {
-                        dest_size: Some(macroquad::math::Vec2::new(dst.w, dst.h)),
-                        rotation: transform.rotation,
-                        pivot: Some(macroquad::math::Vec2::new(dst.w / 2., dst.h / 2.)),
-                        ..Default::default()
-                    },
-                );
-            }
-            RenderComp::AnimatedSprite(spritesheet, player) => {
-                let texture = textures.get(spritesheet.image_path.as_str());
-                let texture = match texture {
-                    Some(t) => t,
-                    None => {
-                        //eprintln!("Erro textura");
-                        return;
-                    }
-                };
-
-                let rect = spritesheet
-                    .animations
-                    .get(player.current_animation.as_str())
-                    .expect("Animation not found")
-                    .get(player.current_frame)
-                    .expect("Animation frame out of bounds");
-                let rect = Rect::new(rect.x as f32, rect.y as f32, rect.w as f32, rect.z as f32);
-                let dst = calculate_dst(transform.position, spritesheet.dst_size, transform.scale);
-
-                draw_texture_ex(
-                    &texture,
-                    dst.x,
-                    dst.y,
-                    WHITE,
-                    DrawTextureParams {
-                        dest_size: Some(macroquad::math::Vec2::new(dst.w, dst.h)),
-                        source: Some(rect),
-                        rotation: transform.rotation,
-                        pivot: Some(macroquad::math::Vec2::new(dst.w / 2., dst.h / 2.)),
-                        ..Default::default()
-                    },
-                );
-            }
-            RenderComp::DebugSprite(sprite) => {
-                let dst = calculate_dst(transform.position, sprite.size, transform.scale);
-                //println!("a{:?}", dst);
-                draw_rectangle(dst.x, dst.y, dst.w, dst.h, sprite.color);
-                draw_circle(dst.x + (dst.w / 2.), dst.y + (dst.h / 2.), 4., BLACK);
-            }
-        }
+        comp.render(&transform, &textures);
     }
 }
