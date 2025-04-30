@@ -82,7 +82,7 @@ pub fn animate_player(
     draw_text(
         format!("123").as_str(),
         transform.position.x - txt_center.x,
-        transform.position.y - txt_center.y - 30.,
+        transform.position.y - txt_center.y,
         24.,
         color::GREEN,
     );

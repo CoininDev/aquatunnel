@@ -1,8 +1,15 @@
 use legion::{world::SubWorld, *};
-use macroquad::{color::*, math::*, prelude::*};
-use std::{cmp, collections::HashMap, sync::Arc};
+use macroquad::{
+    color::{self, *},
+    math::*,
+    prelude::*,
+};
+use std::{collections::HashMap, sync::Arc};
 
-use crate::comps::{AnimationPlayer, DebugSprite, Sprite, Spritesheet, Transform};
+use crate::{
+    comps::{AnimationPlayer, DebugSprite, Player, Sprite, Spritesheet, Transform},
+    game::{Time, Track},
+};
 
 #[system]
 pub fn clear_screen() {
@@ -17,7 +24,48 @@ pub fn draw_fps() {
 #[system(for_each)]
 pub fn z_y_axis_player(spritesheet: &mut Spritesheet, transform: &Transform) {
     spritesheet.z_order = transform.position.y;
-    println!("{}", spritesheet.z_order);
+    //println!("{}", spritesheet.z_order);
+}
+
+fn lerp(from: f32, to: f32, t: f32) -> f32 {
+    from + (to - from) * t
+}
+fn lerp_vec2(from: Vec2, to: Vec2, t: f32) -> Vec2 {
+    Vec2::new(lerp(from.x, to.x, t), lerp(from.y, to.y, t))
+}
+
+const SMOOTHING_FACTOR: f32 = 10.0;
+#[system]
+pub fn camera(
+    #[resource] time: &Time,
+    #[resource] camera: &mut Box<Camera2D>,
+    #[resource] track: &Track,
+) {
+    camera.target = lerp_vec2(
+        camera.target,
+        track.pos * METERS_TO_PIXELS,
+        time.delta * SMOOTHING_FACTOR,
+    );
+    camera.zoom = vec2(2.0 / screen_width(), 2.0 / screen_height());
+    set_camera(camera.as_ref());
+    //set_camera(&Camera2D {
+    //rotation: camera.transform.rotation,
+    //zoom: vec2(2.0 / screen_width(), 2.0 / screen_height()) / camera.transform.scale,
+    //target: position,
+    //viewport: Some((400, 0, 400, 0)),
+    //..Default::default()
+    //});
+}
+
+#[system]
+pub fn camera_ui() {
+    set_default_camera();
+}
+
+#[system(for_each)]
+pub fn track_player(#[resource] track: &mut Track, _: &Player, t: &Transform) {
+    track.pos = t.position;
+    println!("Player: {}", t.position);
 }
 
 // ---- RENDER SYSTEM ----
@@ -47,6 +95,10 @@ fn calculate_dst(position: Vec2, size: Vec2, scale: Vec2) -> Rect {
 #[read_component(Spritesheet)]
 #[read_component(AnimationPlayer)]
 pub fn render(world: &mut SubWorld, #[resource] textures: &HashMap<String, Arc<Texture2D>>) {
+    //Grid
+    //draw_grid(100, 100., color::BLUE, color::RED);
+    draw_grid(10, 100.0, color::WHITE, color::RED);
+
     let mut renderables: Vec<(Transform, RenderComp)> = Vec::new();
 
     //Registering

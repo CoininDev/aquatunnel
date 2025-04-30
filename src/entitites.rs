@@ -27,7 +27,7 @@ pub fn populate(world: &mut World) {
             playing: true,
             frame_duration: 0.1,
         },
-        Player { speed: 1. },
+        Player { speed: 0.7 },
         // DebugSprite {
         //     size: Vec2::new(0.32, 0.64),
         //     color: color::SKYBLUE,
@@ -44,7 +44,7 @@ pub fn populate(world: &mut World) {
         DebugSprite {
             size: Vec2::new(1.0, 1.0),
             color: color::WHITE,
-            z_order: 5.,
+            z_order: -1.,
         },
     ));
 }
