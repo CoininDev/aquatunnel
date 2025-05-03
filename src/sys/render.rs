@@ -1,6 +1,6 @@
 use legion::{world::SubWorld, *};
 use macroquad::{
-    color::{self, *},
+    color::{*},
     math::*,
     prelude::*,
 };
