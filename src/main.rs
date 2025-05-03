@@ -3,6 +3,7 @@ mod entitites;
 mod game;
 mod input;
 mod load;
+mod physics;
 mod sys;
 
 #[macroquad::main("Lo")]

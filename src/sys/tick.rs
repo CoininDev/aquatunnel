@@ -5,11 +5,13 @@ use macroquad::{
     math::Vec2,
     text::{draw_text, get_text_center},
 };
+use nalgebra::vector;
 
 use crate::{
-    comps::{AnimationPlayer, Player, Spritesheet, Transform},
+    comps::{AnimationPlayer, Body, Player, Spritesheet, Transform},
     game::Time,
     input::{InputContext, RawAction},
+    physics::PhysicsContext,
 };
 
 #[system]
@@ -61,15 +63,72 @@ pub fn step_animation(
     *sprite_time += time.delta;
 }
 
+#[system]
+pub fn step_physics(#[resource] p: &mut PhysicsContext) {
+    // Desreferencia os Arc<RefCell<T>> para obter referências mutáveis
+    let gravity = p.gravity.borrow();
+    let mut integration_parameters = p.integration_parameters.borrow_mut();
+    let mut islands = p.islands.borrow_mut();
+    let mut broad_phase = p.broad_phase.borrow_mut();
+    let mut narrow_phase = p.narrow_phase.borrow_mut();
+    let mut bodies = p.bodies.borrow_mut();
+    let mut colliders = p.colliders.borrow_mut();
+    let mut impulse_joints = p.impulse_joints.borrow_mut();
+    let mut multibody_joints = p.multibody_joints.borrow_mut();
+    let mut ccd_solver = p.ccd_solver.borrow_mut();
+    let mut query_pipeline = p.query_pipeline.borrow_mut();
+
+    // Chama o método step do pipeline de física
+    p.pipeline.borrow_mut().step(
+        &*gravity, // Passa a referência de gravity
+        &mut *integration_parameters,
+        &mut *islands,
+        &mut *broad_phase,
+        &mut *narrow_phase,
+        &mut *bodies,
+        &mut *colliders,
+        &mut *impulse_joints,
+        &mut *multibody_joints,
+        &mut *ccd_solver,
+        Some(&mut *query_pipeline),
+        &(),
+        &(),
+    );
+}
+
+#[system(for_each)]
+pub fn integrate_physics(
+    #[resource] ctx: &mut PhysicsContext,
+    transform: &mut Transform,
+    body: &mut Body,
+) {
+    if !body.is_dynamic{
+        return
+    }
+
+    let bodies = ctx.bodies.borrow();
+    if let Some(body) = bodies.get(body.body_handle.expect("Body não carregado")) {
+        let pos = body.position().translation;
+        transform.position.x = pos.x;
+        transform.position.y = pos.y;
+        //let rot = body.rotation().angle();
+        //transform.rotation = rot;
+    }
+}
+
 #[system(for_each)]
 pub fn move_player(
     #[resource] input_ctx: &mut InputContext,
-    #[resource] time: &Time,
-    transform: &mut Transform,
+    #[resource] physics_ctx: &mut PhysicsContext,
     player: &Player,
+    body: &Body
 ) {
-    let dir = input_ctx.move_direction;
-    transform.position += dir * player.speed * time.delta;
+    let mut bodies = physics_ctx.bodies.borrow_mut();
+    if let Some(rb) = bodies.get_mut(body.body_handle.expect("Body não carregado")) {
+        let dir = input_ctx.move_direction;
+        let velocity = dir * player.speed;
+        rb.set_linvel(vector![velocity.x, velocity.y], true);
+    }
 }
 
 #[system(for_each)]
