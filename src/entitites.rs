@@ -27,15 +27,12 @@ pub fn populate(world: &mut World) {
             playing: true,
             frame_duration: 0.1,
         },
-        Player { speed: 0.7 },
-        // DebugSprite {
-        //     size: Vec2::new(0.32, 0.64),
-        //     color: color::SKYBLUE,
-        //     z_order: 0.1,
-        // },
+        Player { speed: 2. },
+        DebugSprite {size: Vec2::new(0.64, 0.64), color: color::BLUE, z_order: -0.1},
+        Body::new(Vec2::new(0.64 / 2., 0.64/2.), true),
     ));
 
-    //ground
+    //block
     world.push((
         Transform {
             position: Vec2::new(4.0, 5.0),
@@ -46,6 +43,7 @@ pub fn populate(world: &mut World) {
             color: color::WHITE,
             z_order: -1.,
         },
+        Body::new(Vec2::new(1.0 / 2., 1.0 /2.), false),
     ));
 }
 

@@ -2,6 +2,7 @@ use macroquad::{
     color::Color,
     math::{IVec4, Vec2, vec2},
 };
+use rapier2d::prelude::{ColliderHandle, RigidBodyHandle};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -53,4 +54,23 @@ pub struct AnimationPlayer {
     pub current_frame: usize,
     pub playing: bool,
     pub frame_duration: f32,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Body {
+    pub body_handle: Option<RigidBodyHandle>,
+    pub collider_handle: Option<ColliderHandle>,
+    pub is_dynamic: bool,
+    pub size: Vec2,
+}
+
+impl Body {
+    pub fn new(size: Vec2, is_dynamic: bool) -> Self {
+        Body {
+            body_handle: None,
+            collider_handle: None,
+            size,
+            is_dynamic,
+        }
+    }
 }

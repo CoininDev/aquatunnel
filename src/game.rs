@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use legion::{Entity, Resources, Schedule, World, systems::CommandBuffer};
+use legion::{Resources, Schedule, World, systems::CommandBuffer};
 use macroquad::{
     camera::Camera2D,
     input::{KeyCode, is_key_down},
@@ -11,10 +11,10 @@ use macroquad::{
 };
 
 use crate::{
-    comps::Transform,
     entitites::populate,
     input::{InputContext, InputSetup},
-    load::load,
+    load::{load, physics_load},
+    physics,
     sys::{
         render::{self, camera_system, camera_ui_system},
         tick,
@@ -30,16 +30,16 @@ pub struct Track {
 }
 
 pub async fn run_game() -> Result<(), String> {
-    let textures: HashMap<String, Arc<Texture2D>> = HashMap::new();
     let mut world = World::default();
     let mut resources = Resources::default();
-    let camera = Box::new(Camera2D::default());
-    let input_ctx = InputContext::new(InputSetup::default());
-    let track: Track = Track { pos: Vec2::ZERO };
-    resources.insert(track);
-    resources.insert(textures);
-    resources.insert(input_ctx);
-    resources.insert(camera);
+
+    //Registering physics resources
+    physics::init_physics(&mut resources);
+
+    resources.insert(Track { pos: Vec2::ZERO });
+    resources.insert(HashMap::<String, Arc<Texture2D>>::new());
+    resources.insert(InputContext::new(InputSetup::default()));
+    resources.insert(Box::new(Camera2D::default()));
     resources.insert(CommandBuffer::new(&world));
 
     populate(&mut world);
@@ -49,8 +49,10 @@ pub async fn run_game() -> Result<(), String> {
         .add_thread_local(tick::input_update_system())
         .add_system(tick::step_animation_system(0.0))
         .add_system(render::z_y_axis_player_system())
+        .add_thread_local(tick::step_physics_system())
+        .add_thread_local(tick::integrate_physics_system())
         .flush()
-        .add_system(tick::move_player_system())
+        .add_thread_local(tick::move_player_system())
         .add_system(render::track_player_system())
         .add_thread_local(tick::animate_player_system())
         .build();
@@ -65,6 +67,7 @@ pub async fn run_game() -> Result<(), String> {
         .build();
 
     load(&mut world, &mut resources).await;
+    physics_load(&mut world, &mut resources);
     'running: loop {
         let dt = Time {
             delta: get_frame_time(),

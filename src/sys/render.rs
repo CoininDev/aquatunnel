@@ -17,6 +17,8 @@ pub fn clear_screen() {
 }
 
 #[system]
+/// Draws the current FPS at the corner of the screen
+/// Ex.: FPS: 60
 pub fn draw_fps() {
     draw_text(format!("FPS: {}", get_fps()).as_str(), 4., 24., 24., WHITE);
 }
@@ -58,7 +60,6 @@ pub fn camera_ui() {
 #[system(for_each)]
 pub fn track_player(#[resource] track: &mut Track, _: &Player, t: &Transform) {
     track.pos = t.position;
-    println!("Player: {}", t.position);
 }
 
 // ---- RENDER SYSTEM ----
