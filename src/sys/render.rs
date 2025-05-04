@@ -1,13 +1,12 @@
 use legion::{world::SubWorld, *};
-use macroquad::{
-    color::{*},
-    math::*,
-    prelude::*,
-};
+use macroquad::{color::*, math::*, prelude::*};
 use std::{collections::HashMap, sync::Arc};
 
 use crate::{
-    comps::{AnimationPlayer, DebugSprite, Player, Sprite, Spritesheet, Transform},
+    comps::{
+        AnimationPlayer, DebugSprite, Player, Sprite, Spritesheet, TileMap, TileMapSource,
+        Transform,
+    },
     game::{Time, Track},
 };
 
@@ -17,9 +16,8 @@ pub fn clear_screen() {
 }
 
 #[system]
-/// Draws the current FPS at the corner of the screen
-/// Ex.: FPS: 60
 pub fn draw_fps() {
+    #[cfg(debug_assertions)]
     draw_text(format!("FPS: {}", get_fps()).as_str(), 4., 24., 24., WHITE);
 }
 
@@ -156,12 +154,70 @@ impl Renderable for (&Spritesheet, &AnimationPlayer) {
     }
 }
 
+impl Renderable for (&TileMap, &TileMapSource) {
+    fn z_order(&self) -> f32 {
+        self.0.z_order
+    }
+
+    fn render(&self, transform: &Transform, textures: &HashMap<String, Arc<Texture2D>>) {
+        let tilemap = self.0;
+        let source = self.1;
+        let map_width: u32 = (source.matrix[0].len() as f32 * tilemap.tile_size.x) as u32;
+        let map_height: u32 = (source.matrix.len() as f32 * tilemap.tile_size.x) as u32;
+        let tex = render_target(map_width, map_height);
+        tex.texture.set_filter(FilterMode::Nearest);
+        let coconuts = &Camera2D {
+            render_target: Some(tex),
+            ..Default::default()
+        };
+        set_camera(coconuts);
+        for y in 0..map_height {
+            for x in 0..map_width {
+                let tile_id = source.matrix[y as usize][x as usize];
+                let src = tilemap
+                    .tiles
+                    .get(&tile_id)
+                    .expect("Algum tile não corresponde aos Tiles conhecidos");
+                let src_rect = Rect::new(
+                    (src.x as f32 * tilemap.tile_size.x) as f32,
+                    (src.y as f32 * tilemap.tile_size.y) as f32,
+                    tilemap.tile_size.x as f32,
+                    tilemap.tile_size.y as f32,
+                );
+                draw_texture_ex(
+                    textures.get(&tilemap.tileset_path).unwrap(),
+                    x as f32,
+                    y as f32,
+                    WHITE,
+                    DrawTextureParams {
+                        source: Some(src_rect),
+                        dest_size: Some(tilemap.tile_size),
+                        ..Default::default()
+                    },
+                );
+            }
+        }
+
+        set_default_camera();
+        draw_texture_ex(
+            &coconuts.render_target.as_ref().unwrap().texture,
+            transform.position.x,
+            transform.position.y,
+            WHITE,
+            DrawTextureParams {
+                rotation: transform.rotation,
+                ..Default::default()
+            },
+        );
+    }
+}
+
 impl Renderable for DebugSprite {
     fn z_order(&self) -> f32 {
         self.z_order
     }
 
-    fn render(&self, transform: &Transform, textures: &HashMap<String, Arc<Texture2D>>) {
+    fn render(&self, transform: &Transform, _: &HashMap<String, Arc<Texture2D>>) {
         let dst = calculate_dst(transform.position, self.size, transform.scale);
         draw_rectangle_ex(
             dst.x,

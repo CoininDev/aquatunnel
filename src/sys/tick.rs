@@ -65,8 +65,7 @@ pub fn step_animation(
 
 #[system]
 pub fn step_physics(#[resource] p: &mut PhysicsContext) {
-    // Desreferencia os Arc<RefCell<T>> para obter referências mutáveis
-    let gravity = p.gravity.borrow();
+    let gravity = p.gravity;
     let mut integration_parameters = p.integration_parameters.borrow_mut();
     let mut islands = p.islands.borrow_mut();
     let mut broad_phase = p.broad_phase.borrow_mut();
@@ -78,9 +77,8 @@ pub fn step_physics(#[resource] p: &mut PhysicsContext) {
     let mut ccd_solver = p.ccd_solver.borrow_mut();
     let mut query_pipeline = p.query_pipeline.borrow_mut();
 
-    // Chama o método step do pipeline de física
     p.pipeline.borrow_mut().step(
-        &*gravity, // Passa a referência de gravity
+        &gravity,
         &mut *integration_parameters,
         &mut *islands,
         &mut *broad_phase,
@@ -102,8 +100,8 @@ pub fn integrate_physics(
     transform: &mut Transform,
     body: &mut Body,
 ) {
-    if !body.is_dynamic{
-        return
+    if !body.is_dynamic {
+        return;
     }
 
     let bodies = ctx.bodies.borrow();
@@ -121,7 +119,7 @@ pub fn move_player(
     #[resource] input_ctx: &mut InputContext,
     #[resource] physics_ctx: &mut PhysicsContext,
     player: &Player,
-    body: &Body
+    body: &Body,
 ) {
     let mut bodies = physics_ctx.bodies.borrow_mut();
     if let Some(rb) = bodies.get_mut(body.body_handle.expect("Body não carregado")) {

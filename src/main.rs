@@ -6,7 +6,7 @@ mod load;
 mod physics;
 mod sys;
 
-#[macroquad::main("Lo")]
+#[macroquad::main("Aquatunnel")]
 async fn main() {
     if let Err(err) = game::run_game().await {
         println!("{}", err);

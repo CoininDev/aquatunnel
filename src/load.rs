@@ -6,7 +6,10 @@ use macroquad::texture::{Texture2D, load_texture};
 use nalgebra::vector;
 use rapier2d::prelude::{ColliderBuilder, RigidBodyBuilder};
 
-use crate::{comps::{Body, Sprite, Spritesheet, Transform}, physics::PhysicsContext};
+use crate::{
+    comps::{Body, Sprite, Spritesheet, TileMap, Transform},
+    physics::PhysicsContext,
+};
 
 pub async fn load(world: &mut World, resources: &mut Resources) {
     let mut textures = resources
@@ -24,6 +27,13 @@ pub async fn load(world: &mut World, resources: &mut Resources) {
     for spr in query.iter(world) {
         if !textures.contains_key(&spr.image_path) {
             img_paths.push(spr.image_path.clone());
+        }
+    }
+
+    let mut query = <&TileMap>::query();
+    for tilemap in query.iter(world) {
+        if !textures.contains_key(&tilemap.tileset_path) {
+            img_paths.push(tilemap.tileset_path.clone());
         }
     }
 
@@ -65,6 +75,9 @@ pub fn physics_load(world: &mut World, resources: &mut Resources) {
         body.collider_handle =
             Some(colliders.insert_with_parent(col, body.body_handle.unwrap(), &mut rigid_bodies));
         #[cfg(debug_assertions)]
-        println!("Novo body (dinâmico:{}) criado em {}: {:?}", body.is_dynamic, transform.position, body.body_handle);
+        println!(
+            "Novo body (dinâmico:{}) criado em {}: {:?}",
+            body.is_dynamic, transform.position, body.body_handle
+        );
     }
 }

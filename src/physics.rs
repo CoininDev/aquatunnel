@@ -4,7 +4,7 @@ use legion::Resources;
 use rapier2d::prelude::*;
 
 pub struct PhysicsContext {
-    pub gravity: Arc<RefCell<Vector<f32>>>,
+    pub gravity: Vector<f32>,
     pub pipeline: Arc<RefCell<PhysicsPipeline>>,
     pub integration_parameters: Arc<RefCell<IntegrationParameters>>,
     pub islands: Arc<RefCell<IslandManager>>,
@@ -19,9 +19,9 @@ pub struct PhysicsContext {
 }
 
 impl PhysicsContext {
-    fn new() -> Self {
+    fn new(gravity: Vector<f32>) -> Self {
         PhysicsContext {
-            gravity: Arc::new(RefCell::new(vector![0.0, 1.0])),
+            gravity,
             pipeline: Arc::new(RefCell::new(PhysicsPipeline::default())),
             integration_parameters: Arc::new(RefCell::new(IntegrationParameters::default())),
             islands: Arc::new(RefCell::new(IslandManager::default())),
@@ -38,5 +38,5 @@ impl PhysicsContext {
 }
 
 pub fn init_physics(resources: &mut Resources) {
-    resources.insert(PhysicsContext::new());
+    resources.insert(PhysicsContext::new(vector![0.0, 0.0]));
 }

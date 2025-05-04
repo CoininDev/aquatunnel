@@ -30,6 +30,8 @@ pub struct Track {
 }
 
 pub async fn run_game() -> Result<(), String> {
+    
+
     let mut world = World::default();
     let mut resources = Resources::default();
 
@@ -75,6 +77,7 @@ pub async fn run_game() -> Result<(), String> {
         resources.insert(dt);
 
         if is_key_down(KeyCode::Escape) {
+            #[cfg(debug_assertions)]
             break 'running;
         }
 
