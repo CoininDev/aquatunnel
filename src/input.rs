@@ -23,68 +23,8 @@ impl InputContext {
     }
 
     pub fn update(&mut self) {
-        self.move_direction = match self.setup.move_method {
-            0 => self.method0(),
-            1 => self.method1(),
-            2 => self.method2(),
-            3 => self.method3(),
-            4 => self.method4(),
-            5 => self.method5(),
-            _ => Vec2::ZERO,
-        };
-
-        self.look_direction = match self.setup.look_method {
-            0 => self.method0(),
-            1 => self.method1(),
-            2 => self.method2(),
-            3 => self.method3(),
-            4 => self.method4(),
-            5 => self.method5(),
-            _ => Vec2::ZERO,
-        };
-    }
-
-    // WASD
-    fn method0(&self) -> Vec2 {
-        // -A +D
-        let x_signal = -(is_key_down(KeyCode::A) as i32) + (is_key_down(KeyCode::D) as i32);
-        // -W +S
-        let y_signal = -(is_key_down(KeyCode::W) as i32) + (is_key_down(KeyCode::S) as i32);
-
-        Vec2::new(x_signal as f32, y_signal as f32).normalize_or_zero()
-    }
-
-    // Direção do centro da tela pro mouse
-    fn method1(&self) -> Vec2 {
-        let (mouse_x, mouse_y) = mouse_position();
-        let center_x = screen_width() / 2.0;
-        let center_y = screen_width() / 2.0;
-
-        let direction = Vec2::new(mouse_x - center_x, mouse_y - center_y);
-        direction.normalize_or_zero()
-    }
-
-    // Setas do teclado
-    fn method2(&self) -> Vec2 {
-        // -left +right
-        let x_signal = -(is_key_down(KeyCode::Left) as i32) + (is_key_down(KeyCode::Right) as i32);
-        // -up +down
-        let y_signal = -(is_key_down(KeyCode::Up) as i32) + (is_key_down(KeyCode::Down) as i32);
-
-        Vec2::new(x_signal as f32, y_signal as f32).normalize_or_zero()
-    }
-
-    // Direção delta do mouse
-    fn method3(&self) -> Vec2 {
-        mouse_delta_position().normalize_or_zero()
-    }
-    // Joystick esquerdo
-    fn method4(&self) -> Vec2 {
-        todo!()
-    }
-    // Joystick direito
-    fn method5(&self) -> Vec2 {
-        todo!()
+        self.move_direction = self.setup.move_method.run();
+        self.look_direction = self.setup.look_method.run();
     }
 }
 
@@ -99,11 +39,10 @@ pub enum RawAction {
     MouseButton(MouseButton),
 }
 
-#[derive(Clone)]
 pub struct InputSetup {
     pub keybindings: HashMap<RawAction, InputAction>,
-    move_method: u8,
-    look_method: u8,
+    move_method: Box<dyn AxisMethod>,
+    look_method: Box<dyn AxisMethod>,
 }
 
 impl Default for InputSetup {
@@ -117,8 +56,61 @@ impl Default for InputSetup {
 
         InputSetup {
             keybindings,
-            move_method: 0,
-            look_method: 1,
+            move_method: Box::new(WASDMethod),
+            look_method: Box::new(MouseCenterMethod),
         }
+    }
+}
+
+/// Uma forma de conseguir uma direção
+/// Pode ser baseada no mouse, ou no WASD, ou num joystick.
+trait AxisMethod {
+    fn run(&self) -> Vec2;
+}
+
+#[derive(Clone)]
+struct WASDMethod;
+impl AxisMethod for WASDMethod {
+    fn run(&self) -> Vec2 {
+        // -A+D
+        let x_signal = -(is_key_down(KeyCode::A) as i32) + (is_key_down(KeyCode::D) as i32);
+        // -W+S
+        let y_signal = -(is_key_down(KeyCode::W) as i32) + (is_key_down(KeyCode::S) as i32);
+
+        Vec2::new(x_signal as f32, y_signal as f32).normalize_or_zero()
+    }
+}
+
+#[derive(Clone)]
+struct MouseCenterMethod;
+impl AxisMethod for MouseCenterMethod {
+    fn run(&self) -> Vec2 {
+        let (mouse_x, mouse_y) = mouse_position();
+        let center_x = screen_width() / 2.0;
+        let center_y = screen_width() / 2.0;
+
+        let direction = Vec2::new(mouse_x - center_x, mouse_y - center_y);
+        direction.normalize_or_zero()
+    }
+}
+
+#[derive(Clone)]
+struct MouseDeltaMethod;
+impl AxisMethod for MouseDeltaMethod {
+    fn run(&self) -> Vec2 {
+        mouse_delta_position()
+    }
+}
+
+#[derive(Clone)]
+struct ArrowsMethod;
+impl AxisMethod for ArrowsMethod {
+    fn run(&self) -> Vec2 {
+        // -left +right
+        let x_signal = -(is_key_down(KeyCode::Left) as i32) + (is_key_down(KeyCode::Right) as i32);
+        // -up +down
+        let y_signal = -(is_key_down(KeyCode::Up) as i32) + (is_key_down(KeyCode::Down) as i32);
+
+        Vec2::new(x_signal as f32, y_signal as f32).normalize_or_zero()
     }
 }
