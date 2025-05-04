@@ -185,7 +185,9 @@ impl Renderable for (&TileMap, &TileMapSource) {
                     tilemap.tile_size.y as f32,
                 );
                 draw_texture_ex(
-                    textures.get(&tilemap.tileset_path).unwrap(),
+                    textures
+                        .get(&tilemap.tileset_path)
+                        .expect("Tileset não carregada"),
                     x as f32,
                     y as f32,
                     WHITE,
@@ -261,6 +263,16 @@ pub fn render(world: &mut SubWorld, #[resource] textures: &HashMap<String, Arc<T
     for (transform, sprite) in debug_query.iter(world) {
         renderables.push((transform, sprite));
     }
+
+    let mut tile_storage: Vec<(&Transform, (&TileMap, &TileMapSource))> = Vec::new();
+    let mut tile_query = <(&Transform, &TileMapSource, &TileMap)>::query();
+    for (t, s, m) in tile_query.iter(world) {
+        tile_storage.push((t, (m, s)));
+    }
+
+    tile_storage
+        .iter()
+        .for_each(|(t, c)| renderables.push((t, c)));
 
     renderables.sort_by(|a, b| {
         let (_, x) = a;
