@@ -10,6 +10,7 @@ legion = "0.4.0"
 macroquad = "0.4.14"
 nalgebra = "0.33.2"
 rapier2d = "0.24.0"
+tiled = "0.14.0"
 
 [features]
 debugal = []

@@ -4,7 +4,7 @@ use crate::comps::*;
 use legion::World;
 use macroquad::{
     color,
-    math::{IVec4, Vec2},
+    math::{IVec2, IVec4, Vec2},
 };
 
 pub fn populate(world: &mut World) {
@@ -28,8 +28,12 @@ pub fn populate(world: &mut World) {
             frame_duration: 0.1,
         },
         Player { speed: 2. },
-        DebugSprite {size: Vec2::new(0.64, 0.64), color: color::BLUE, z_order: -0.1},
-        Body::new(Vec2::new(0.64 / 2., 0.64/2.), true),
+        DebugSprite {
+            size: Vec2::new(0.64, 0.64),
+            color: color::BLUE,
+            z_order: -0.1,
+        },
+        Body::new(Vec2::new(0.64 / 2., 0.64 / 2.), true),
     ));
 
     //block
@@ -43,67 +47,53 @@ pub fn populate(world: &mut World) {
             color: color::WHITE,
             z_order: -1.,
         },
-        Body::new(Vec2::new(1.0 / 2., 1.0 /2.), false),
+        Body::new(Vec2::new(1.0 / 2., 1.0 / 2.), false),
     ));
+
+    //tilemap
+    world.push((
+        Transform::default(),
+        TileMap {
+            tileset_path: "assets/dungeon_tiles.png".to_string(),
+            z_order: 0.,
+            tile_size: Vec2::new(8., 8.),
+            tiles: tiles(),
+        },
+        TileMapSource { matrix: matrix() },
+    ));
+}
+
+fn matrix() -> Vec<Vec<u32>> {
+    vec![
+        vec![2, 3, 4, 3, 4, 3, 4, 3, 4, 5],
+        vec![1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        vec![6, 7, 8, 7, 8, 7, 8, 7, 8, 9],
+    ]
+}
+
+fn tiles() -> HashMap<u32, IVec2> {
+    let mut cu: HashMap<u32, IVec2> = HashMap::new();
+    //plane
+    cu.insert(1, IVec2::new(1, 1));
+    //upperborders
+    cu.extend((0..4).map(|i| (2 + i, IVec2::new((4 + i) as i32, 16))));
+    //bottomborders
+    cu.extend((0..4).map(|i| (6 + i, IVec2::new((4 + i) as i32, 17))));
+
+    cu
 }
 
 fn animations() -> HashMap<String, Vec<IVec4>> {
     let mut cu = HashMap::new();
-    cu.insert(
-        String::from("up"),
-        vec![
-            IVec4::new(64 * 0, 0, 64, 64),
-            IVec4::new(64 * 1, 0, 64, 64),
-            IVec4::new(64 * 2, 0, 64, 64),
-            IVec4::new(64 * 3, 0, 64, 64),
-            IVec4::new(64 * 4, 0, 64, 64),
-            IVec4::new(64 * 5, 0, 64, 64),
-            IVec4::new(64 * 6, 0, 64, 64),
-            IVec4::new(64 * 7, 0, 64, 64),
-            IVec4::new(64 * 8, 0, 64, 64),
-        ],
-    );
-    cu.insert(
-        String::from("left"),
-        vec![
-            IVec4::new(64 * 0, 64, 64, 64),
-            IVec4::new(64 * 1, 64, 64, 64),
-            IVec4::new(64 * 2, 64, 64, 64),
-            IVec4::new(64 * 3, 64, 64, 64),
-            IVec4::new(64 * 4, 64, 64, 64),
-            IVec4::new(64 * 5, 64, 64, 64),
-            IVec4::new(64 * 6, 64, 64, 64),
-            IVec4::new(64 * 7, 64, 64, 64),
-            IVec4::new(64 * 8, 64, 64, 64),
-        ],
-    );
-    cu.insert(
-        String::from("down"),
-        vec![
-            IVec4::new(64 * 0, 128, 64, 64),
-            IVec4::new(64 * 1, 128, 64, 64),
-            IVec4::new(64 * 2, 128, 64, 64),
-            IVec4::new(64 * 3, 128, 64, 64),
-            IVec4::new(64 * 4, 128, 64, 64),
-            IVec4::new(64 * 5, 128, 64, 64),
-            IVec4::new(64 * 6, 128, 64, 64),
-            IVec4::new(64 * 7, 128, 64, 64),
-            IVec4::new(64 * 8, 128, 64, 64),
-        ],
-    );
-    cu.insert(
-        String::from("right"),
-        vec![
-            IVec4::new(64 * 0, 192, 64, 64),
-            IVec4::new(64 * 1, 192, 64, 64),
-            IVec4::new(64 * 2, 192, 64, 64),
-            IVec4::new(64 * 3, 192, 64, 64),
-            IVec4::new(64 * 4, 192, 64, 64),
-            IVec4::new(64 * 5, 192, 64, 64),
-            IVec4::new(64 * 6, 192, 64, 64),
-            IVec4::new(64 * 7, 192, 64, 64),
-            IVec4::new(64 * 8, 192, 64, 64),
-        ],
-    );
+    cu.insert("up".to_string(), generate_frames(9, 0, 64));
+    cu.insert("left".to_string(), generate_frames(9, 1, 64));
+    cu.insert("down".to_string(), generate_frames(9, 2, 64));
+    cu.insert("right".to_string(), generate_frames(9, 3, 64));
     cu
+}
+
+fn generate_frames(frame_quantity: i32, row: i32, frame_size: i32) -> Vec<IVec4> {
+    (0..frame_quantity)
+        .map(|i| IVec4::new(frame_size * i, frame_size * row, frame_size, frame_size))
+        .collect()
 }

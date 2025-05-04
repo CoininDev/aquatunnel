@@ -1,6 +1,6 @@
 use macroquad::{
     color::Color,
-    math::{IVec4, Vec2, vec2},
+    math::{IVec2, IVec4, Vec2, vec2},
 };
 use rapier2d::prelude::{ColliderHandle, RigidBodyHandle};
 use std::collections::HashMap;
@@ -73,4 +73,18 @@ impl Body {
             is_dynamic,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct TileMap {
+    pub tileset_path: String,
+    pub tiles: HashMap<u32, IVec2>,
+    pub tile_size: Vec2,
+    pub z_order: f32,
+}
+
+/// TileMap can be used with local TileMapSource, or alternately based on external info, as chunkmanager
+#[derive(Debug, Clone, PartialEq)]
+pub struct TileMapSource {
+    pub matrix: Vec<Vec<u32>>,
 }
