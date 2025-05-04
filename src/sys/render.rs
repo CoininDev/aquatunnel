@@ -264,15 +264,15 @@ pub fn render(world: &mut SubWorld, #[resource] textures: &HashMap<String, Arc<T
         renderables.push((transform, sprite));
     }
 
-    let mut tile_storage: Vec<(&Transform, (&TileMap, &TileMapSource))> = Vec::new();
-    let mut tile_query = <(&Transform, &TileMapSource, &TileMap)>::query();
-    for (t, s, m) in tile_query.iter(world) {
-        tile_storage.push((t, (m, s)));
-    }
+    //let mut tile_storage: Vec<(&Transform, (&TileMap, &TileMapSource))> = Vec::new();
+    //let mut tile_query = <(&Transform, &TileMapSource, &TileMap)>::query();
+    //for (t, s, m) in tile_query.iter(world) {
+    //    tile_storage.push((t, (m, s)));
+    //}
 
-    tile_storage
-        .iter()
-        .for_each(|(t, c)| renderables.push((t, c)));
+    //tile_storage
+    //    .iter()
+    //    .for_each(|(t, c)| renderables.push((t, c)));
 
     renderables.sort_by(|a, b| {
         let (_, x) = a;
