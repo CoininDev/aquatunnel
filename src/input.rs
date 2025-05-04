@@ -3,7 +3,7 @@ use std::collections::{HashMap, VecDeque};
 use macroquad::input::{KeyCode, MouseButton, is_key_down};
 use macroquad::input::{mouse_delta_position, mouse_position};
 use macroquad::math::Vec2;
-use macroquad::window::screen_width;
+use macroquad::window::{screen_height, screen_width};
 
 pub struct InputContext {
     pub move_direction: Vec2,
@@ -87,7 +87,7 @@ impl AxisMethod for MouseCenterMethod {
     fn run(&self) -> Vec2 {
         let (mouse_x, mouse_y) = mouse_position();
         let center_x = screen_width() / 2.0;
-        let center_y = screen_width() / 2.0;
+        let center_y = screen_height() / 2.0;
 
         let direction = Vec2::new(mouse_x - center_x, mouse_y - center_y);
         direction.normalize_or_zero()
