@@ -1,6 +1,9 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 
-use macroquad::input::{KeyCode, MouseButton, is_key_down};
+use macroquad::input::{
+    KeyCode, MouseButton, is_key_down, is_key_released, is_mouse_button_down,
+    is_mouse_button_released,
+};
 use macroquad::input::{mouse_delta_position, mouse_position};
 use macroquad::math::Vec2;
 use macroquad::window::{screen_height, screen_width};
@@ -8,7 +11,7 @@ use macroquad::window::{screen_height, screen_width};
 pub struct InputContext {
     pub move_direction: Vec2,
     pub look_direction: Vec2,
-    pub actions: VecDeque<InputAction>,
+    pub actions: HashSet<InputAction>,
     pub setup: InputSetup,
 }
 
@@ -17,7 +20,7 @@ impl InputContext {
         InputContext {
             move_direction: Vec2::ZERO,
             look_direction: Vec2::ZERO,
-            actions: VecDeque::new(),
+            actions: HashSet::new(),
             setup,
         }
     }
@@ -25,18 +28,38 @@ impl InputContext {
     pub fn update(&mut self) {
         self.move_direction = self.setup.move_method.run();
         self.look_direction = self.setup.look_method.run();
+
+        self.actions.clear();
+        for (raw, action) in &self.setup.keybindings {
+            let is_pressed = match raw {
+                RawAction::Key(k) => is_key_down(*k),
+                RawAction::MouseButton(b) => is_mouse_button_down(*b),
+                RawAction::KeyUp(k) => is_key_released(*k),
+                RawAction::MouseButtonUp(b) => is_mouse_button_released(*b),
+            };
+            if is_pressed {
+                self.actions.insert(*action);
+            }
+        }
+    }
+
+    pub fn consume_action(&mut self, target: InputAction) -> bool {
+        self.actions.take(&target).is_some()
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum InputAction {
-    DebugAction,
+    DebugActionOn,
+    DebugActionOff,
 }
 
 #[derive(PartialEq, Eq, Hash, Clone)]
 pub enum RawAction {
     Key(KeyCode),
+    KeyUp(KeyCode),
     MouseButton(MouseButton),
+    MouseButtonUp(MouseButton),
 }
 
 pub struct InputSetup {
@@ -48,10 +71,15 @@ pub struct InputSetup {
 impl Default for InputSetup {
     fn default() -> Self {
         let mut keybindings = HashMap::new();
-        keybindings.insert(RawAction::Key(KeyCode::D), InputAction::DebugAction);
+        keybindings.insert(RawAction::Key(KeyCode::D), InputAction::DebugActionOn);
+        keybindings.insert(RawAction::KeyUp(KeyCode::D), InputAction::DebugActionOff);
         keybindings.insert(
             RawAction::MouseButton(MouseButton::Left),
-            InputAction::DebugAction,
+            InputAction::DebugActionOn,
+        );
+        keybindings.insert(
+            RawAction::MouseButtonUp(MouseButton::Left),
+            InputAction::DebugActionOff,
         );
 
         InputSetup {

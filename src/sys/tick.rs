@@ -1,7 +1,6 @@
 use legion::*;
 use macroquad::{
-    color,
-    input::{is_key_down, is_mouse_button_down},
+    color::{self, WHITE},
     math::Vec2,
     text::{draw_text, get_text_center},
 };
@@ -10,27 +9,27 @@ use nalgebra::vector;
 use crate::{
     comps::{AnimationPlayer, Body, Player, Spritesheet, Transform},
     game::Time,
-    input::{InputContext, RawAction},
+    input::{InputAction, InputContext},
     physics::PhysicsContext,
 };
 
 #[system]
 pub fn input_update(#[resource] input: &mut InputContext) {
     input.update();
+}
 
-    for (k, a) in input.setup.keybindings.clone() {
-        match k {
-            RawAction::Key(k) => {
-                if is_key_down(k) {
-                    input.actions.push_front(a);
-                }
-            }
-            RawAction::MouseButton(b) => {
-                if is_mouse_button_down(b) {
-                    input.actions.push_front(a);
-                }
-            }
-        }
+#[system]
+pub fn debug_input(#[resource] ctx: &mut InputContext, #[state] state: &mut bool) {
+    if ctx.consume_action(InputAction::DebugActionOn) {
+        *state = true;
+    }
+
+    if ctx.consume_action(InputAction::DebugActionOff) {
+        *state = false;
+    }
+
+    if *state {
+        draw_text("Bunda", 24., 48., 24., WHITE);
     }
 }
 

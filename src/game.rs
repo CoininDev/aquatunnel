@@ -30,8 +30,6 @@ pub struct Track {
 }
 
 pub async fn run_game() -> Result<(), String> {
-    
-
     let mut world = World::default();
     let mut resources = Resources::default();
 
@@ -65,6 +63,7 @@ pub async fn run_game() -> Result<(), String> {
         .add_thread_local(render::render_system())
         .flush()
         .add_thread_local(camera_ui_system())
+        .add_thread_local(tick::debug_input_system(false))
         .add_thread_local(render::draw_fps_system())
         .build();
 
