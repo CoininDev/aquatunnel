@@ -162,18 +162,13 @@ impl Renderable for (&TileMap, &TileMapSource) {
     fn render(&self, transform: &Transform, textures: &HashMap<String, Arc<Texture2D>>) {
         let tilemap = self.0;
         let source = self.1;
-        let map_width: u32 = (source.matrix[0].len() as f32 * tilemap.tile_size.x) as u32;
-        let map_height: u32 = (source.matrix.len() as f32 * tilemap.tile_size.x) as u32;
-        let tex = render_target(map_width, map_height);
-        tex.texture.set_filter(FilterMode::Nearest);
-        let coconuts = &Camera2D {
-            render_target: Some(tex),
-            ..Default::default()
-        };
-        set_camera(coconuts);
-        for y in 0..map_height {
-            for x in 0..map_width {
+        for y in 0..source.matrix.len() {
+            for x in 0..source.matrix[0].len() {
                 let tile_id = source.matrix[y as usize][x as usize];
+                let world_x =
+                    x as f32 * tilemap.tile_size.x * transform.scale.x + transform.position.x;
+                let world_y =
+                    y as f32 * tilemap.tile_size.y * transform.scale.y + transform.position.y;
                 let src = tilemap
                     .tiles
                     .get(&tile_id)
@@ -188,29 +183,20 @@ impl Renderable for (&TileMap, &TileMapSource) {
                     textures
                         .get(&tilemap.tileset_path)
                         .expect("Tileset não carregada"),
-                    x as f32,
-                    y as f32,
+                    world_x,
+                    world_y,
                     WHITE,
                     DrawTextureParams {
                         source: Some(src_rect),
-                        dest_size: Some(tilemap.tile_size),
+                        dest_size: Some(vec2(
+                            tilemap.tile_size.x * transform.scale.x,
+                            tilemap.tile_size.y * transform.scale.y,
+                        )),
                         ..Default::default()
                     },
                 );
             }
         }
-
-        set_default_camera();
-        draw_texture_ex(
-            &coconuts.render_target.as_ref().unwrap().texture,
-            transform.position.x,
-            transform.position.y,
-            WHITE,
-            DrawTextureParams {
-                rotation: transform.rotation,
-                ..Default::default()
-            },
-        );
     }
 }
 
@@ -241,6 +227,8 @@ impl Renderable for DebugSprite {
 #[read_component(DebugSprite)]
 #[read_component(Spritesheet)]
 #[read_component(AnimationPlayer)]
+#[read_component(TileMap)]
+#[read_component(TileMapSource)]
 pub fn render(world: &mut SubWorld, #[resource] textures: &HashMap<String, Arc<Texture2D>>) {
     let mut renderables: Vec<(&Transform, &dyn Renderable)> = Vec::new();
 
@@ -250,11 +238,11 @@ pub fn render(world: &mut SubWorld, #[resource] textures: &HashMap<String, Arc<T
         renderables.push((transform, sprite));
     }
 
-    let mut animated_storage: Vec<(&Transform, (&Spritesheet, &AnimationPlayer))> = Vec::new();
-    let mut animated_query = <(&Transform, &Spritesheet, &AnimationPlayer)>::query();
-    for (t, s, p) in animated_query.iter(world) {
-        animated_storage.push((t, (s, p)));
-    }
+    let animated_storage: Vec<_> = <(&Transform, &Spritesheet, &AnimationPlayer)>::query()
+        .iter(world)
+        .map(|(t, s, p)| (t, (s, p)))
+        .collect();
+
     animated_storage
         .iter()
         .for_each(|(t, c)| renderables.push((t, c)));
@@ -264,15 +252,14 @@ pub fn render(world: &mut SubWorld, #[resource] textures: &HashMap<String, Arc<T
         renderables.push((transform, sprite));
     }
 
-    //let mut tile_storage: Vec<(&Transform, (&TileMap, &TileMapSource))> = Vec::new();
-    //let mut tile_query = <(&Transform, &TileMapSource, &TileMap)>::query();
-    //for (t, s, m) in tile_query.iter(world) {
-    //    tile_storage.push((t, (m, s)));
-    //}
+    let tile_storage: Vec<_> = <(&Transform, &TileMap, &TileMapSource)>::query()
+        .iter(world)
+        .map(|(t, m, s)| (t, (m, s)))
+        .collect();
 
-    //tile_storage
-    //    .iter()
-    //    .for_each(|(t, c)| renderables.push((t, c)));
+    tile_storage
+        .iter()
+        .for_each(|(t, c)| renderables.push((t, c)));
 
     renderables.sort_by(|a, b| {
         let (_, x) = a;

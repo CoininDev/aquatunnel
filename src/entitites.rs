@@ -4,7 +4,7 @@ use crate::comps::*;
 use legion::World;
 use macroquad::{
     color,
-    math::{IVec2, IVec4, Vec2},
+    math::{IVec2, IVec4, Vec2, vec2},
 };
 
 pub fn populate(world: &mut World) {
@@ -52,7 +52,10 @@ pub fn populate(world: &mut World) {
 
     //tilemap
     world.push((
-        Transform::default(),
+        Transform {
+            scale: vec2(4., 4.),
+            ..Default::default()
+        },
         TileMap {
             tileset_path: "assets/dungeon_tiles.png".to_string(),
             z_order: 0.,
@@ -74,12 +77,11 @@ fn matrix() -> Vec<Vec<u32>> {
 fn tiles() -> HashMap<u32, IVec2> {
     let mut cu: HashMap<u32, IVec2> = HashMap::new();
     //plane
-    cu.insert(1, IVec2::new(1, 1));
+    cu.insert(1, IVec2::new(5, 5));
     //upperborders
     cu.extend((0..4).map(|i| (2 + i, IVec2::new((4 + i) as i32, 16))));
     //bottomborders
     cu.extend((0..4).map(|i| (6 + i, IVec2::new((4 + i) as i32, 17))));
-
     cu
 }
 
