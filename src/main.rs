@@ -4,6 +4,7 @@ mod game;
 mod input;
 mod load;
 mod physics;
+mod resources;
 mod sys;
 
 #[macroquad::main("Aquatunnel")]

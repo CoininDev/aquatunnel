@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::sync::Arc;
 
 use futures::future::join_all;
 use legion::{Resources, World, query::*};
@@ -9,12 +9,11 @@ use rapier2d::prelude::{ColliderBuilder, RigidBodyBuilder};
 use crate::{
     comps::{Body, Sprite, Spritesheet, TileMap, Transform},
     physics::PhysicsContext,
+    resources::Textures,
 };
 
 pub async fn load(world: &mut World, resources: &mut Resources) {
-    let mut textures = resources
-        .get_mut::<HashMap<String, Arc<Texture2D>>>()
-        .unwrap();
+    let textures = &mut resources.get_mut::<Textures>().unwrap().0;
 
     let mut img_paths: Vec<String> = Vec::new();
     let mut query = <&Sprite>::query();
