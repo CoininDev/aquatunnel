@@ -11,24 +11,14 @@ use macroquad::{
 };
 
 use crate::{
+    comps::Transform,
     entitites::populate,
     input::{InputContext, InputSetup},
     load::{load, physics_load},
     physics,
-    sys::{
-        render::{self, camera_system, camera_ui_system},
-        tick,
-    },
+    resources::*,
+    sys::*,
 };
-
-pub struct Time {
-    pub delta: f32,
-}
-
-pub struct Track {
-    pub pos: Vec2,
-}
-
 pub async fn run_game() -> Result<(), String> {
     let mut world = World::default();
     let mut resources = Resources::default();
@@ -37,9 +27,10 @@ pub async fn run_game() -> Result<(), String> {
     physics::init_physics(&mut resources);
 
     resources.insert(Track { pos: Vec2::ZERO });
-    resources.insert(HashMap::<String, Arc<Texture2D>>::new());
+    resources.insert(Textures(HashMap::new()));
     resources.insert(InputContext::new(InputSetup::default()));
     resources.insert(Box::new(Camera2D::default()));
+    resources.insert(RenderQueue(Vec::new()));
     resources.insert(CommandBuffer::new(&world));
 
     populate(&mut world);
@@ -58,11 +49,11 @@ pub async fn run_game() -> Result<(), String> {
         .build();
 
     let mut draw_schedule = Schedule::builder()
-        .add_thread_local(camera_system())
+        .add_thread_local(render::camera_system())
         .add_thread_local(render::clear_screen_system())
         .add_thread_local(render::render_system())
         .flush()
-        .add_thread_local(camera_ui_system())
+        .add_thread_local(render::camera_ui_system())
         .add_thread_local(tick::debug_input_system(false))
         .add_thread_local(render::draw_fps_system())
         .build();
