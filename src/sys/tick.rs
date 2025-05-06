@@ -1,4 +1,4 @@
-use legion::*;
+use legion::{systems::CommandBuffer, *};
 use macroquad::{
     color::{self, WHITE},
     math::Vec2,
