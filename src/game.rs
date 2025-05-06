@@ -1,21 +1,19 @@
-use std::{collections::HashMap, sync::Arc};
+use std::collections::HashMap;
 
 use legion::{Resources, Schedule, World, systems::CommandBuffer};
 use macroquad::{
     camera::Camera2D,
     input::{KeyCode, is_key_down},
     math::Vec2,
-    texture::Texture2D,
     time::get_frame_time,
     window::next_frame,
 };
 
 use crate::{
-    comps::Transform,
     entitites::populate,
-    input::{InputContext, InputSetup},
     load::{load, physics_load},
-    physics,
+    resources::input::{InputContext, InputSetup},
+    resources::physics,
     resources::*,
     sys::*,
 };

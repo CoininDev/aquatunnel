@@ -75,6 +75,7 @@ impl Body {
     }
 }
 
+/// TileMap can be used with local TileMapSource, or alternately based on external info, as chunkmanager
 #[derive(Debug, Clone, PartialEq)]
 pub struct TileMap {
     pub tileset_path: String,
@@ -83,8 +84,18 @@ pub struct TileMap {
     pub z_order: f32,
 }
 
-/// TileMap can be used with local TileMapSource, or alternately based on external info, as chunkmanager
 #[derive(Debug, Clone, PartialEq)]
 pub struct TileMapSource {
     pub matrix: Vec<Vec<u32>>,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Switch {
+    pub on: bool,
+}
+
+impl Switch {
+    pub fn destroy(&self) {
+        todo!();
+    }
 }

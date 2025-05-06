@@ -1,9 +1,7 @@
 mod comps;
 mod entitites;
 mod game;
-mod input;
 mod load;
-mod physics;
 mod resources;
 mod sys;
 

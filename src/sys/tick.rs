@@ -8,9 +8,9 @@ use nalgebra::vector;
 
 use crate::{
     comps::{AnimationPlayer, Body, Player, Spritesheet, Transform},
-    input::{InputAction, InputContext},
-    physics::PhysicsContext,
     resources::Time,
+    resources::input::{InputAction, InputContext},
+    resources::physics::PhysicsContext,
 };
 
 #[system]

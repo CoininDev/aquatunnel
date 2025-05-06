@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 
 use macroquad::input::{
     KeyCode, MouseButton, is_key_down, is_key_released, is_mouse_button_down,
