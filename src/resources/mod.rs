@@ -1,3 +1,6 @@
+pub mod chunks;
+pub mod input;
+pub mod physics;
 pub mod renderable;
 use std::collections::HashMap;
 use std::sync::Arc;

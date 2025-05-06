@@ -8,8 +8,8 @@ use rapier2d::prelude::{ColliderBuilder, RigidBodyBuilder};
 
 use crate::{
     comps::{Body, Sprite, Spritesheet, TileMap, Transform},
-    physics::PhysicsContext,
     resources::Textures,
+    resources::physics::PhysicsContext,
 };
 
 pub async fn load(world: &mut World, resources: &mut Resources) {
