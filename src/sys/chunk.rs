@@ -41,8 +41,8 @@ pub fn update_monster_chunk(t: &Transform, m: &mut Monster, #[resource] cm: &Chu
 
 fn get_chunk_tiles() -> HashMap<u32, IVec2> {
     let mut cu = HashMap::new();
-    cu.insert(0, ivec2(5, 5));
-    cu.insert(1, ivec2(5, 5));
+    cu.insert(0, ivec2(0, 0));
+    cu.insert(1, ivec2(4, 4));
     cu
 }
 
@@ -77,6 +77,7 @@ pub fn load_freed_chunks(
                         TileMap {
                             tileset_path: "assets/dungeon_tiles.png".to_string(),
                             tile_size: cm.tile_size_in_meters,
+                            tile_size_in_tileset: Vec2::new(8., 8.),
                             tiles: get_chunk_tiles(),
                             z_order: 0.,
                         },

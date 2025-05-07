@@ -60,9 +60,10 @@ pub fn populate(world: &mut World) {
             tileset_path: "assets/dungeon_tiles.png".to_string(),
             z_order: 0.,
             tile_size: Vec2::new(8., 8.),
+            tile_size_in_tileset: Vec2::new(8., 8.),
             tiles: tiles(),
         },
-        TileMapSource { matrix: matrix() },
+        //TileMapSource { matrix: matrix() },
     ));
 }
 
