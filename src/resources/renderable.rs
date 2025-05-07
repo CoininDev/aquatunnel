@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use macroquad::color::*;
 use macroquad::math::*;
 use macroquad::shapes::*;
@@ -21,7 +23,7 @@ fn calculate_dst(position: Vec2, size: Vec2, scale: Vec2) -> Rect {
     Rect::new(px, py, sizex, sizey)
 }
 
-pub trait Renderable {
+pub trait Renderable: Debug {
     fn z_order(&self) -> f32;
     fn render(&self, transform: &Transform, textures: &Textures);
 }
@@ -160,37 +162,37 @@ impl Renderable for (&TileMap, &Chunk) {
             return;
         }
         let matrix = source.matrix.as_ref().unwrap();
-
         for y in 0..matrix.len() {
             for x in 0..matrix[0].len() {
                 let tile_id = matrix[y as usize][x as usize];
                 let screen_x =
-                    x as f32 * tilemap.tile_size.x * transform.scale.x + transform.position.x;
+                    x as f32 * tilemap.tile_size.x * METERS_TO_PIXELS * transform.scale.x + transform.position.x;
+                
                 let screen_y =
-                    y as f32 * tilemap.tile_size.y * transform.scale.y + transform.position.y;
+                    y as f32 * tilemap.tile_size.y * METERS_TO_PIXELS * transform.scale.y + transform.position.y;
                 let src = tilemap
                     .tiles
                     .get(&tile_id)
                     .expect("Algum tile não corresponde aos Tiles conhecidos");
                 let src_rect = Rect::new(
-                    (src.x as f32 * tilemap.tile_size.x) as f32,
-                    (src.y as f32 * tilemap.tile_size.y) as f32,
-                    tilemap.tile_size.x as f32,
-                    tilemap.tile_size.y as f32,
+                    (src.x as f32 * tilemap.tile_size_in_tileset.x) as f32,
+                    (src.y as f32 * tilemap.tile_size_in_tileset.y) as f32,
+                    tilemap.tile_size_in_tileset.x as f32,
+                    tilemap.tile_size_in_tileset.y as f32,
                 );
                 draw_texture_ex(
                     textures
                         .0
                         .get(&tilemap.tileset_path)
                         .expect("Tileset não carregada"),
-                    screen_x,
-                    screen_y,
+                    screen_x + (transform.position.x * METERS_TO_PIXELS),
+                    screen_y + (transform.position.y * METERS_TO_PIXELS),
                     WHITE,
                     DrawTextureParams {
                         source: Some(src_rect),
                         dest_size: Some(vec2(
-                            tilemap.tile_size.x * transform.scale.x,
-                            tilemap.tile_size.y * transform.scale.y,
+                            tilemap.tile_size.x * METERS_TO_PIXELS * transform.scale.x,
+                            tilemap.tile_size.y * METERS_TO_PIXELS * transform.scale.y,
                         )),
                         ..Default::default()
                     },

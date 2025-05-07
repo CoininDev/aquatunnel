@@ -101,7 +101,6 @@ pub fn render(world: &mut SubWorld, #[resource] textures: &Textures) {
         .iter(world)
         .map(|(t, m, c)| (t, (m, c)))
         .collect::<Vec<_>>();
-    println!("{:?}", chunk_storage);
     chunk_storage
         .iter()
         .for_each(|(t, r)| renderables.push((t, r)));
@@ -120,5 +119,6 @@ pub fn render(world: &mut SubWorld, #[resource] textures: &Textures) {
     for renderable in renderables.iter() {
         let (transform, comp) = renderable;
         comp.render(&transform, &textures);
+        //println!("{:?}", comp);
     }
 }

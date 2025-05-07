@@ -35,8 +35,8 @@ pub async fn run_game() -> Result<(), String> {
         Simplex::default(),
         0.0,
         IVec2::ONE * 16,
-        Vec2::ONE,
-        1,
+        Vec2::ONE * 0.32,
+        5,
         7,
     ));
     resources.insert(Box::new(Camera2D::default()));

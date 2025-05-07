@@ -85,6 +85,7 @@ pub struct TileMap {
     pub tileset_path: String,
     pub tiles: HashMap<u32, IVec2>,
     pub tile_size: Vec2,
+    pub tile_size_in_tileset: Vec2,
     pub z_order: f32,
 }
 
