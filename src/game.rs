@@ -3,8 +3,8 @@ use std::collections::HashMap;
 use legion::{Resources, Schedule, World, systems::CommandBuffer};
 use macroquad::{
     camera::Camera2D,
-    input::{is_key_down, KeyCode},
-    math::{ivec2, IVec2, Vec2},
+    input::{KeyCode, is_key_down},
+    math::{IVec2, Vec2, ivec2},
     time::get_frame_time,
     window::next_frame,
 };
@@ -13,9 +13,14 @@ use noise::Simplex;
 use crate::{
     entitites::populate,
     load::{load, physics_load},
-    resources::{chunk_manager::ChunkManager, input::{InputContext, InputSetup}, physics, *},
+    resources::{
+        chunk_manager::ChunkManager,
+        input::{InputContext, InputSetup},
+        physics, *,
+    },
     sys::*,
 };
+
 pub async fn run_game() -> Result<(), String> {
     let mut world = World::default();
     let mut resources = Resources::default();
@@ -26,7 +31,14 @@ pub async fn run_game() -> Result<(), String> {
     resources.insert(Track { pos: Vec2::ZERO });
     resources.insert(Textures(HashMap::new()));
     resources.insert(InputContext::new(InputSetup::default()));
-    resources.insert(ChunkManager::new(Simplex::default(), 0.5, IVec2::ONE * 16, Vec2::ONE, 5, 7));
+    resources.insert(ChunkManager::new(
+        Simplex::default(),
+        0.0,
+        IVec2::ONE * 16,
+        Vec2::ONE,
+        1,
+        7,
+    ));
     resources.insert(Box::new(Camera2D::default()));
     resources.insert(RenderQueue(Vec::new()));
 
@@ -39,17 +51,16 @@ pub async fn run_game() -> Result<(), String> {
         .add_system(render::z_y_axis_player_system())
         .add_thread_local(tick::step_physics_system())
         .add_thread_local(tick::integrate_physics_system())
-        .flush()
         .add_thread_local(tick::move_player_system())
         .add_system(render::track_player_system())
         .add_thread_local(tick::animate_player_system())
-        .flush()
         .add_system(chunk::update_player_chunk_system())
         .add_system(chunk::update_monster_chunk_system())
         .add_system(chunk::load_freed_chunks_system())
         .add_system(chunk::load_chunks_system())
         .add_system(chunk::unload_chunks_system())
         .add_system(chunk::free_chunks_system())
+        .flush()
         .build();
 
     let mut draw_schedule = Schedule::builder()
