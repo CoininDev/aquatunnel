@@ -1,9 +1,12 @@
-use legion::{system, systems::CommandBuffer, world::SubWorld, Entity};
-use macroquad::math::{IVec2, Rect, Vec2};
+use std::collections::HashMap;
+
+use crate::{
+    comps::*,
+    resources::{chunk_manager::ChunkManager, ivec2_to_vec2, vec2_to_ivec2},
+};
 use legion::query::*;
-use crate::{comps::*, resources::{chunk_manager::ChunkManager, ivec2_to_vec2, vec2_to_ivec2}};
-
-
+use legion::{Entity, system, systems::CommandBuffer, world::SubWorld};
+use macroquad::math::{IVec2, Rect, Vec2, ivec2};
 
 fn get_chunk_by_position(pos: Vec2, cm: &ChunkManager) -> IVec2 {
     let chunk_m = cm.chunk_size_in_meters;
@@ -17,31 +20,38 @@ fn get_chunk_rect(pos: IVec2, cm: &ChunkManager) -> Rect {
     Rect::new(pos.x, pos.y, size.x, size.y)
 }
 
+fn get_world_position_by_chunk(chunk: IVec2, cm: &ChunkManager) -> Vec2 {
+    ivec2_to_vec2(chunk) * cm.chunk_size_in_meters
+}
 
 #[system(for_each)]
-pub fn update_player_chunk(
-    t: &Transform,
-    _: &Player,
-    #[resource] cm: &mut ChunkManager,
-) {
+pub fn update_player_chunk(t: &Transform, _: &Player, #[resource] cm: &mut ChunkManager) {
     cm.player_chunk = get_chunk_by_position(t.position, cm);
 }
 
 #[system(for_each)]
-pub fn update_monster_chunk(
-    t: &Transform,
-    m: &mut Monster,
-    #[resource] cm: &ChunkManager,
-) {
+pub fn debug_chunk(c: &Chunk) {
+    println!("{:?}", c);
+}
+
+#[system(for_each)]
+pub fn update_monster_chunk(t: &Transform, m: &mut Monster, #[resource] cm: &ChunkManager) {
     m.chunk = get_chunk_by_position(t.position, cm)
+}
+
+fn get_chunk_tiles() -> HashMap<u32, IVec2> {
+    let mut cu = HashMap::new();
+    cu.insert(0, ivec2(5, 5));
+    cu.insert(1, ivec2(5, 5));
+    cu
 }
 
 #[system]
 #[read_component(Chunk)]
 #[read_component(Monster)]
 pub fn load_freed_chunks(
-    world: &mut SubWorld,
-    #[resource] cm: &ChunkManager,
+    world: &SubWorld,
+    #[resource] cm: &mut ChunkManager,
     cb: &mut CommandBuffer,
 ) {
     let load_radius = (cm.unloading_distance as f32).sqrt().ceil() as i32;
@@ -50,93 +60,75 @@ pub fn load_freed_chunks(
             let pos = cm.player_chunk + IVec2::new(dx, dy);
 
             if pos.distance_squared(cm.player_chunk) < cm.unloading_distance
-                && !<&Chunk>::query().iter(world).find(|c| c.pos == pos).is_some()
+                && !<&Chunk>::query()
+                    .iter(world)
+                    .find(|c| c.pos == pos)
+                    .is_some()
             {
                 let rect = get_chunk_rect(pos, cm);
-                let mut chunk = Chunk::new(pos, rect);
-                chunk.load(&cm.world_noise, &world, cm, cb);
-                cb.push((
-                    chunk,
-                ));
+                cm.chunks.insert(
+                    pos,
+                    cb.push((
+                        Chunk::new(pos, rect),
+                        Transform {
+                            position: get_world_position_by_chunk(pos, cm),
+                            ..Default::default()
+                        },
+                        TileMap {
+                            tileset_path: "assets/dungeon_tiles.png".to_string(),
+                            tile_size: cm.tile_size_in_meters,
+                            tiles: get_chunk_tiles(),
+                            z_order: 0.,
+                        },
+                    )),
+                );
+                //println!("{:?}", cm.chunks);
             }
         }
     }
 }
 
 #[system]
-#[write_component(Chunk)]
+#[read_component(Chunk)]
 #[read_component(Monster)]
-pub fn load_chunks(
-    world: &mut SubWorld,
-    #[resource] cm: &ChunkManager,
-    cb: &mut CommandBuffer,
-) {
-    let chunks_to_load: Vec<_> = <&mut Chunk>::query()
-        .iter_mut(world)
-        .filter(|chunk| chunk.pos.distance_squared(cm.player_chunk) < cm.unloading_distance)
-        .filter(|chunk| chunk.state != ChunkState::Loaded)
-        .map(|chunk| chunk as *mut Chunk) 
-        .collect();
-
-    for chunk_ptr in chunks_to_load {
-        let chunk = unsafe { &mut *chunk_ptr };
-        chunk.load(&cm.world_noise, world, cm, cb);
-    }
-}
-
-#[system]
-#[write_component(Chunk)]
-#[read_component(Monster)]
-pub fn unload_chunks(
-    world: &mut SubWorld,
-    #[resource] cm: &ChunkManager,
-    cb: &mut CommandBuffer,
-) {
-    let chunks_to_unload: Vec<_> = <&mut Chunk>::query()
-        .iter_mut(world)
-        .filter(|chunk| chunk.pos.distance_squared(cm.player_chunk) >= cm.unloading_distance)
-        .filter(|chunk| chunk.state == ChunkState::Loaded)
-        .map(|chunk| chunk as *mut Chunk) 
-        .collect();
-
-    for chunk_ptr in chunks_to_unload {
-        let chunk = unsafe { &mut *chunk_ptr };
-        chunk.unload(world, cb);
-    }
-}
-
-#[system]
-#[write_component(Chunk)]
-#[read_component(Transform)]
-pub fn free_chunks(
-    world: &mut SubWorld,
-    #[resource] cm: &ChunkManager,
-    commands: &mut CommandBuffer,
-) {
-    // 1) Coleto todos os chunks que devem ser “free” e suas entidades
-    let to_free: Vec<(Entity, IVec2)> = <(Entity, &Chunk)>::query()
+pub fn load_chunks(world: &SubWorld, #[resource] cm: &ChunkManager, cb: &mut CommandBuffer) {
+    let chunks_to_load: Vec<_> = <(Entity, &Chunk)>::query()
         .iter(world)
-        .filter_map(|(e, chunk)| {
-            if chunk.pos.distance_squared(cm.player_chunk) >= cm.freeing_distance {
-                Some((*e, chunk.pos))
-            } else {
-                None
-            }
-        })
+        .filter(|(_, chunk)| chunk.pos.distance_squared(cm.player_chunk) < cm.unloading_distance)
+        .filter(|(_, chunk)| chunk.state != ChunkState::Loaded)
         .collect();
 
-    // 2) Para cada chunk:
-    for (chunk_entity, chunk_pos) in to_free {
-        // - 2a) retire todas as entidades “filhas” dentro do retângulo do chunk
-        let rect = get_chunk_rect(chunk_pos, cm);
-        <(Entity, &Transform)>::query()
-            .iter(world)
-            .filter(|(_, t)| rect.contains(t.position))
-            .for_each(|(entity, _)| {
-                commands.remove(*entity);
-            });
+    for (entity, chunk) in chunks_to_load {
+        chunk.load(entity, world, cm, cb);
+    }
+}
 
-        // - 2b) finalmente, remova o próprio chunk do World
-        commands.remove(chunk_entity);
+#[system]
+#[read_component(Chunk)]
+#[read_component(Monster)]
+pub fn unload_chunks(world: &SubWorld, #[resource] cm: &ChunkManager, cb: &mut CommandBuffer) {
+    let chunks_to_unload: Vec<_> = <(Entity, &Chunk)>::query()
+        .iter(world)
+        .filter(|(_, chunk)| chunk.pos.distance_squared(cm.player_chunk) >= cm.unloading_distance)
+        .filter(|(_, chunk)| chunk.state == ChunkState::Loaded)
+        .collect();
+
+    for (entity, chunk) in chunks_to_unload {
+        chunk.unload(entity, world, cb);
+    }
+}
+
+#[system]
+#[read_component(Chunk)]
+#[read_component(Transform)]
+#[read_component(Monster)]
+pub fn free_chunks(world: &SubWorld, #[resource] cm: &ChunkManager, cb: &mut CommandBuffer) {
+    let chunks_to_free: Vec<_> = <(Entity, &Chunk)>::query()
+        .iter(world)
+        .filter(|(_, chunk)| chunk.pos.distance_squared(cm.player_chunk) >= cm.freeing_distance)
+        .collect();
+
+    for (entity, chunk) in chunks_to_free {
+        chunk.free(entity, world, cb);
     }
 }

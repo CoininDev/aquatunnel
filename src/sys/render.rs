@@ -3,11 +3,10 @@ use macroquad::{color::*, math::*, prelude::*};
 
 use crate::{
     comps::{
-        AnimationPlayer, DebugSprite, Player, Sprite, Spritesheet, TileMap, TileMapSource,
+        AnimationPlayer, Chunk, DebugSprite, Player, Sprite, Spritesheet, TileMap, TileMapSource,
         Transform,
     },
-    resources::renderable::Renderable,
-    resources::*,
+    resources::{renderable::Renderable, *},
 };
 
 #[system]
@@ -68,38 +67,46 @@ pub fn track_player(#[resource] track: &mut Track, _: &Player, t: &Transform) {
 #[read_component(AnimationPlayer)]
 #[read_component(TileMap)]
 #[read_component(TileMapSource)]
+#[read_component(Chunk)]
 pub fn render(world: &mut SubWorld, #[resource] textures: &Textures) {
     let mut renderables: Vec<(&Transform, &dyn Renderable)> = Vec::new();
 
     //Registering
-    let mut sprite_query = <(&Sprite, &Transform)>::query();
-    for (sprite, transform) in sprite_query.iter(world) {
-        renderables.push((transform, sprite));
-    }
+    <(&Transform, &Sprite)>::query()
+        .iter(world)
+        .for_each(|(t, s)| renderables.push((t, s)));
 
-    let animated_storage: Vec<_> = <(&Transform, &Spritesheet, &AnimationPlayer)>::query()
+    //Here, for keeping borrows safe, we need to collect before registering
+    let animated_sotage = <(&Transform, &Spritesheet, &AnimationPlayer)>::query()
         .iter(world)
         .map(|(t, s, p)| (t, (s, p)))
-        .collect();
-
-    animated_storage
+        .collect::<Vec<_>>();
+    animated_sotage
         .iter()
-        .for_each(|(t, c)| renderables.push((t, c)));
+        .for_each(|(t, r)| renderables.push((t, r)));
 
-    let mut debug_query = <(&Transform, &DebugSprite)>::query();
-    for (transform, sprite) in debug_query.iter(world) {
-        renderables.push((transform, sprite));
-    }
+    <(&Transform, &DebugSprite)>::query()
+        .iter(world)
+        .for_each(|(t, r)| renderables.push((t, r)));
 
-    let tile_storage: Vec<_> = <(&Transform, &TileMap, &TileMapSource)>::query()
+    let tilemap_storage = <(&Transform, &TileMap, &TileMapSource)>::query()
         .iter(world)
         .map(|(t, m, s)| (t, (m, s)))
-        .collect();
-
-    tile_storage
+        .collect::<Vec<_>>();
+    tilemap_storage
         .iter()
-        .for_each(|(t, c)| renderables.push((t, c)));
+        .for_each(|(t, r)| renderables.push((t, r)));
 
+    let chunk_storage = <(&Transform, &TileMap, &Chunk)>::query()
+        .iter(world)
+        .map(|(t, m, c)| (t, (m, c)))
+        .collect::<Vec<_>>();
+    println!("{:?}", chunk_storage);
+    chunk_storage
+        .iter()
+        .for_each(|(t, r)| renderables.push((t, r)));
+
+    //Sorting
     renderables.sort_by(|a, b| {
         let (_, x) = a;
         let az = x.z_order();

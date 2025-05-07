@@ -148,6 +148,58 @@ impl Renderable for (&TileMap, &TileMapSource) {
     }
 }
 
+impl Renderable for (&TileMap, &Chunk) {
+    fn z_order(&self) -> f32 {
+        self.0.z_order
+    }
+
+    fn render(&self, transform: &Transform, textures: &Textures) {
+        let tilemap = self.0;
+        let source = self.1;
+        if source.matrix.is_none() {
+            return;
+        }
+        let matrix = source.matrix.as_ref().unwrap();
+
+        for y in 0..matrix.len() {
+            for x in 0..matrix[0].len() {
+                let tile_id = matrix[y as usize][x as usize];
+                let screen_x =
+                    x as f32 * tilemap.tile_size.x * transform.scale.x + transform.position.x;
+                let screen_y =
+                    y as f32 * tilemap.tile_size.y * transform.scale.y + transform.position.y;
+                let src = tilemap
+                    .tiles
+                    .get(&tile_id)
+                    .expect("Algum tile não corresponde aos Tiles conhecidos");
+                let src_rect = Rect::new(
+                    (src.x as f32 * tilemap.tile_size.x) as f32,
+                    (src.y as f32 * tilemap.tile_size.y) as f32,
+                    tilemap.tile_size.x as f32,
+                    tilemap.tile_size.y as f32,
+                );
+                draw_texture_ex(
+                    textures
+                        .0
+                        .get(&tilemap.tileset_path)
+                        .expect("Tileset não carregada"),
+                    screen_x,
+                    screen_y,
+                    WHITE,
+                    DrawTextureParams {
+                        source: Some(src_rect),
+                        dest_size: Some(vec2(
+                            tilemap.tile_size.x * transform.scale.x,
+                            tilemap.tile_size.y * transform.scale.y,
+                        )),
+                        ..Default::default()
+                    },
+                );
+            }
+        }
+    }
+}
+
 impl Renderable for DebugSprite {
     fn z_order(&self) -> f32 {
         self.z_order

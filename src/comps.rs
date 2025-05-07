@@ -1,7 +1,7 @@
-use legion::{query::*, systems::CommandBuffer, world::SubWorld, Entity};
+use legion::{Entity, query::*, systems::CommandBuffer, world::SubWorld};
 use macroquad::{
     color::Color,
-    math::{vec2, IVec2, IVec4, Rect, Vec2},
+    math::{IVec2, IVec4, Rect, Vec2, vec2},
 };
 use noise::NoiseFn;
 use rapier2d::prelude::{ColliderHandle, RigidBodyHandle};
@@ -94,9 +94,12 @@ pub struct TileMapSource {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+pub struct TileMapChunkSource;
+
+#[derive(Debug, Clone, PartialEq)]
 pub struct Monster {
     pub active: bool,
-    pub chunk: IVec2
+    pub chunk: IVec2,
 }
 
 impl Monster {
@@ -114,7 +117,6 @@ pub struct Chunk {
     pub rect: Rect,
 }
 
-
 impl Chunk {
     pub fn new(pos: IVec2, rect: Rect) -> Self {
         Chunk {
@@ -125,37 +127,50 @@ impl Chunk {
         }
     }
 
-    pub fn load(&mut self, noise: &noise::Simplex, world: &SubWorld, cm: &ChunkManager, cb: &mut CommandBuffer) {
-        match self.state {
-            ChunkState::Freed => {
-                self.spawn(cb);
-                self.load_matrix(noise, cm);
-                self.state = ChunkState::Loaded;
-            },
-            ChunkState::Unloaded => {
-                self.set_inchunk_monsters_active(world, cb, true);
-                self.load_matrix(noise, cm);                
-                self.state = ChunkState::Loaded;
-            },
-            ChunkState::Loaded => return,
-        }
-    }
-
-    pub fn unload(&mut self, world: &SubWorld, cb: &mut CommandBuffer) {
-        if self.state == ChunkState::Unloaded {
+    pub fn load(&self, e: &Entity, world: &SubWorld, cm: &ChunkManager, cb: &mut CommandBuffer) {
+        if self.state == ChunkState::Loaded {
             return;
         }
 
-        self.matrix = None;
-        self.set_inchunk_monsters_active(world, cb, false);
-        self.state = ChunkState::Unloaded;
+        let matrix = self.load_matrix(cm);
+
+        if self.state == ChunkState::Unloaded {
+            self.set_inchunk_monsters_active(world, cb, true);
+        }
+        if self.state == ChunkState::Freed {
+            self.spawn(cb);
+        }
+
+        cb.add_component(
+            *e,
+            Chunk {
+                state: ChunkState::Loaded,
+                matrix: Some(matrix),
+                ..self.clone()
+            },
+        );
     }
 
-    pub fn free(&self, world: &SubWorld, cb: &mut CommandBuffer) {
-        self.destroy_inchunk_monsters(world, cb);
+    pub fn unload(&self, e: &Entity, world: &SubWorld, cb: &mut CommandBuffer) {
+        if self.state == ChunkState::Unloaded {
+            return;
+        }
+        self.set_inchunk_monsters_active(world, cb, false);
+        cb.add_component(
+            *e,
+            Chunk {
+                state: ChunkState::Unloaded,
+                matrix: None,
+                ..self.clone()
+            },
+        );
     }
-    
-    
+
+    pub fn free(&self, e: &Entity, world: &SubWorld, cb: &mut CommandBuffer) {
+        self.destroy_inchunk_monsters(world, cb);
+        cb.remove(*e);
+    }
+
     //=====PRIVATE======
     fn set_inchunk_monsters_active(&self, world: &SubWorld, cb: &mut CommandBuffer, active: bool) {
         let mut q = <(Entity, &Monster)>::query();
@@ -168,22 +183,20 @@ impl Chunk {
             }
         }
     }
-    
-    
-    fn load_matrix(&mut self, noise: &noise::Simplex, cm: &ChunkManager) {
-        let mut matrix_buffer: Vec<Vec<u32>> = vec![vec![0; cm.chunk_size_in_tiles.x as usize + 1]; cm.chunk_size_in_tiles.y as usize + 1];
-        for y in 0..=cm.chunk_size_in_tiles.x as usize {
-            for x in 0..=cm.chunk_size_in_tiles.y as usize {
-                let noise_val = noise.get([x as f64, y as f64]);
-                if noise_val < cm.threshold {
-                    matrix_buffer[y][x] = 0;
-                } else {
-                    matrix_buffer[y][x] = 1;
-                }
+
+    fn load_matrix(&self, cm: &ChunkManager) -> Vec<Vec<u32>> {
+        let mut matrix_buffer: Vec<Vec<u32>> = vec![
+            vec![0; cm.chunk_size_in_tiles.x as usize + 1];
+            cm.chunk_size_in_tiles.y as usize + 1
+        ];
+        for y in 0..=cm.chunk_size_in_tiles.y as usize {
+            for x in 0..=cm.chunk_size_in_tiles.x as usize {
+                let noise_val = cm.world_noise.get([x as f64, y as f64]);
+                matrix_buffer[y][x] = if noise_val < cm.threshold { 0 } else { 1 };
             }
         }
 
-        self.matrix = Some(matrix_buffer.clone());
+        matrix_buffer
     }
 
     fn destroy_inchunk_monsters(&self, world: &SubWorld, cb: &mut CommandBuffer) {
@@ -195,9 +208,8 @@ impl Chunk {
         }
     }
 
-    fn spawn(&self, cb: &mut CommandBuffer) {
-        return
-    }
+    // Será implementada quando os monstros estiverem prontos
+    fn spawn(&self, _cb: &mut CommandBuffer) {}
 }
 
 /// a Chunk can be in 3 states:
@@ -211,3 +223,4 @@ pub enum ChunkState {
     Unloaded,
     Freed,
 }
+
