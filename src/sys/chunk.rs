@@ -2,7 +2,9 @@ use std::collections::HashMap;
 
 use crate::{
     comps::*,
-    resources::{chunk_manager::ChunkManager, ivec2_to_vec2, vec2_to_ivec2},
+    resources::{
+        chunk_manager::ChunkManager, ivec2_to_vec2, physics::PhysicsContext, vec2_to_ivec2,
+    },
 };
 use legion::query::*;
 use legion::{Entity, system, systems::CommandBuffer, world::SubWorld};
@@ -70,6 +72,7 @@ pub fn create_new_chunks(
                     pos,
                     cb.push((
                         Chunk::new(pos, rect),
+                        ChunkBody::new(cm.chunk_size_in_tiles, pos),
                         Transform {
                             position: get_world_position_by_chunk(pos, cm),
                             ..Default::default()
@@ -83,7 +86,6 @@ pub fn create_new_chunks(
                         },
                     )),
                 );
-                //println!("{:?}", cm.chunks);
             }
         }
     }
@@ -92,30 +94,46 @@ pub fn create_new_chunks(
 #[system]
 #[read_component(Chunk)]
 #[read_component(Monster)]
-pub fn load_chunks(world: &SubWorld, #[resource] cm: &ChunkManager, cb: &mut CommandBuffer) {
-    let chunks_to_load: Vec<_> = <(Entity, &Chunk)>::query()
+#[read_component(ChunkBody)]
+pub fn load_chunks(
+    world: &SubWorld,
+    #[resource] cm: &ChunkManager,
+    #[resource] pc: &mut PhysicsContext,
+    cb: &mut CommandBuffer,
+) {
+    let chunks_to_load: Vec<_> = <(Entity, &Chunk, &ChunkBody)>::query()
         .iter(world)
-        .filter(|(_, chunk)| chunk.pos.distance_squared(cm.player_chunk) < cm.unloading_distance)
-        .filter(|(_, chunk)| chunk.state != ChunkState::Loaded)
+        .filter(|(_, chunk, _)| chunk.pos.distance_squared(cm.player_chunk) < cm.unloading_distance)
+        .filter(|(_, chunk, _)| chunk.state != ChunkState::Loaded)
         .collect();
 
-    for (entity, chunk) in chunks_to_load {
+    for (entity, chunk, body) in chunks_to_load {
         chunk.load(entity, world, cm, cb);
+        body.load(entity, cm, pc, cb);
     }
 }
 
 #[system]
 #[read_component(Chunk)]
 #[read_component(Monster)]
-pub fn unload_chunks(world: &SubWorld, #[resource] cm: &ChunkManager, cb: &mut CommandBuffer) {
-    let chunks_to_unload: Vec<_> = <(Entity, &Chunk)>::query()
+#[read_component(ChunkBody)]
+pub fn unload_chunks(
+    world: &SubWorld,
+    #[resource] cm: &ChunkManager,
+    #[resource] pc: &mut PhysicsContext,
+    cb: &mut CommandBuffer,
+) {
+    let chunks_to_unload: Vec<_> = <(Entity, &Chunk, &ChunkBody)>::query()
         .iter(world)
-        .filter(|(_, chunk)| chunk.pos.distance_squared(cm.player_chunk) >= cm.unloading_distance)
-        .filter(|(_, chunk)| chunk.state == ChunkState::Loaded)
+        .filter(|(_, chunk, _)| {
+            chunk.pos.distance_squared(cm.player_chunk) >= cm.unloading_distance
+        })
+        .filter(|(_, chunk, _)| chunk.state == ChunkState::Loaded)
         .collect();
 
-    for (entity, chunk) in chunks_to_unload {
+    for (entity, chunk, body) in chunks_to_unload {
         chunk.unload(entity, world, cb);
+        body.unload(entity, cm, pc, cb);
     }
 }
 

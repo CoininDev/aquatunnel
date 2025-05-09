@@ -5,7 +5,7 @@ use legion::{Resources, Schedule, World, systems::CommandBuffer};
 use macroquad::{
     camera::Camera2D,
     input::{KeyCode, is_key_down},
-    math::{IVec2, Vec2, ivec2},
+    math::{IVec2, UVec2, Vec2, ivec2},
     time::get_frame_time,
     window::next_frame,
 };
@@ -33,16 +33,16 @@ pub async fn run_game() -> Result<(), String> {
     resources.insert(InputContext::new(InputSetup::default()));
 
     let mut noise = FastNoiseLite::new();
-    noise.set_seed(None);
+    noise.set_seed(Some(15));
     noise.set_noise_type(Some(NoiseType::Perlin));
 
     resources.insert(ChunkManager::new(
         noise,
         Vec2::ONE * 40.,
         0.01,
-        IVec2::ONE * 16,
+        UVec2::ONE * 16,
         Vec2::ONE * 0.16,
-        8,
+        1,
         12,
     ));
     resources.insert(Box::new(Camera2D::default()));
@@ -63,8 +63,8 @@ pub async fn run_game() -> Result<(), String> {
         .add_system(chunk::update_player_chunk_system())
         .add_system(chunk::update_monster_chunk_system())
         .add_system(chunk::create_new_chunks_system())
-        .add_system(chunk::load_chunks_system())
-        .add_system(chunk::unload_chunks_system())
+        .add_thread_local(chunk::load_chunks_system())
+        .add_thread_local(chunk::unload_chunks_system())
         .add_system(chunk::free_chunks_system())
         .flush()
         .build();
