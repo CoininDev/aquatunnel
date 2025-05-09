@@ -55,7 +55,8 @@ impl Renderable for Sprite {
             DrawTextureParams {
                 dest_size: Some(macroquad::math::Vec2::new(dst.w, dst.h)),
                 rotation: transform.rotation,
-                pivot: Some(macroquad::math::Vec2::new(dst.w / 2., dst.h / 2.)),
+                flip_x: self.flip_x,
+                flip_y: self.flip_y,
                 ..Default::default()
             },
         );
@@ -162,17 +163,19 @@ impl Renderable for (&TileMap, &Chunk) {
             return;
         }
         let matrix = source.matrix.as_ref().unwrap();
-        for y in 0..matrix.len() {
-            for x in 0..matrix[0].len() {
-                let tile_id = matrix[y as usize][x as usize];
+        for y in 0..matrix.height {
+            for x in 0..matrix.width {
+                let tile_id = matrix.get(x, y).unwrap();
                 let screen_x =
-                    x as f32 * tilemap.tile_size.x * METERS_TO_PIXELS * transform.scale.x + transform.position.x;
-                
+                    x as f32 * tilemap.tile_size.x * METERS_TO_PIXELS * transform.scale.x
+                        + transform.position.x;
+
                 let screen_y =
-                    y as f32 * tilemap.tile_size.y * METERS_TO_PIXELS * transform.scale.y + transform.position.y;
+                    y as f32 * tilemap.tile_size.y * METERS_TO_PIXELS * transform.scale.y
+                        + transform.position.y;
                 let src = tilemap
                     .tiles
-                    .get(&tile_id)
+                    .get(tile_id)
                     .expect("Algum tile não corresponde aos Tiles conhecidos");
                 let src_rect = Rect::new(
                     (src.x as f32 * tilemap.tile_size_in_tileset.x) as f32,

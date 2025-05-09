@@ -3,11 +3,10 @@ use macroquad::{
     color::Color,
     math::{IVec2, IVec4, Rect, Vec2, vec2},
 };
-use noise::NoiseFn;
 use rapier2d::prelude::{ColliderHandle, RigidBodyHandle};
 use std::collections::HashMap;
 
-use crate::resources::chunk_manager::ChunkManager;
+use crate::{common::Matrix, resources::chunk_manager::ChunkManager};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Transform {
@@ -35,6 +34,8 @@ impl Default for Transform {
 pub struct Sprite {
     pub image_path: String,
     pub z_order: f32,
+    pub flip_x: bool,
+    pub flip_y: bool,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -112,7 +113,7 @@ impl Monster {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Chunk {
     pub pos: IVec2,
-    pub matrix: Option<Vec<Vec<u32>>>,
+    pub matrix: Option<Matrix<u32>>,
     pub state: ChunkState,
     /// in meters
     pub rect: Rect,
@@ -133,7 +134,7 @@ impl Chunk {
             return;
         }
 
-        let matrix = self.load_matrix(cm);
+        let matrix = self.gen_matrix(cm);
 
         if self.state == ChunkState::Unloaded {
             self.set_inchunk_monsters_active(world, cb, true);
@@ -185,18 +186,25 @@ impl Chunk {
         }
     }
 
-    fn load_matrix(&self, cm: &ChunkManager) -> Vec<Vec<u32>> {
-        let mut matrix_buffer: Vec<Vec<u32>> = vec![
-            vec![0; cm.chunk_size_in_tiles.x as usize + 1];
-            cm.chunk_size_in_tiles.y as usize + 1
-        ];
+    fn gen_matrix(&self, cm: &ChunkManager) -> Matrix<u32> {
+        let mut matrix_buffer: Matrix<u32> = Matrix::new(
+            (cm.chunk_size_in_tiles.x + 1) as usize,
+            (cm.chunk_size_in_tiles.y + 1) as usize,
+            0,
+        );
+
         for y in 0..=cm.chunk_size_in_tiles.y as usize {
             for x in 0..=cm.chunk_size_in_tiles.x as usize {
-                let noise_val = cm.world_noise.get([x as f64, y as f64]);
-                matrix_buffer[y][x] = if noise_val < cm.threshold { 0 } else { 1 };
+                let world_x: f32 = (self.pos.x * cm.chunk_size_in_tiles.x + x as i32) as f32
+                    * cm.tile_size_in_meters.x
+                    * cm.noise_scale.x;
+                let world_y: f32 = (self.pos.y * cm.chunk_size_in_tiles.y + y as i32) as f32
+                    * cm.tile_size_in_meters.y
+                    * cm.noise_scale.y;
+                let noise_val = cm.world_noise.get_noise_2d(world_x, world_y);
+                matrix_buffer[(x, y)] = if noise_val < cm.threshold { 0 } else { 1 };
             }
         }
-
         matrix_buffer
     }
 
@@ -224,4 +232,3 @@ pub enum ChunkState {
     Unloaded,
     Freed,
 }
-

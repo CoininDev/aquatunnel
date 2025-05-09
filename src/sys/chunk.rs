@@ -42,14 +42,14 @@ pub fn update_monster_chunk(t: &Transform, m: &mut Monster, #[resource] cm: &Chu
 fn get_chunk_tiles() -> HashMap<u32, IVec2> {
     let mut cu = HashMap::new();
     cu.insert(0, ivec2(0, 0));
-    cu.insert(1, ivec2(4, 4));
+    cu.insert(1, ivec2(5, 5));
     cu
 }
 
 #[system]
 #[read_component(Chunk)]
 #[read_component(Monster)]
-pub fn load_freed_chunks(
+pub fn create_new_chunks(
     world: &SubWorld,
     #[resource] cm: &mut ChunkManager,
     cb: &mut CommandBuffer,

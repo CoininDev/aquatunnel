@@ -15,24 +15,13 @@ pub fn populate(world: &mut World) {
             position: Vec2::new(4.0, 0.0),
             ..Default::default()
         },
-        Spritesheet {
-            image_path: "assets/C3ZwL.png".to_string(),
-            animations: player_anims,
-            dst_size: Vec2::new(0.64, 0.64),
-            z_order: 2.,
-        },
-        AnimationPlayer {
-            current_animation: String::from("right"),
-            current_frame: 0,
-            playing: true,
-            frame_duration: 0.1,
+        Sprite {
+            image_path: "assets/diver1.png".into(),
+            z_order: 5.5,
+            flip_x: false,
+            flip_y: false,
         },
         Player { speed: 2. },
-        DebugSprite {
-            size: Vec2::new(0.64, 0.64),
-            color: color::BLUE,
-            z_order: -0.1,
-        },
         Body::new(Vec2::new(0.64 / 2., 0.64 / 2.), true),
     ));
 

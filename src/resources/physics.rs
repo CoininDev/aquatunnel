@@ -38,5 +38,5 @@ impl PhysicsContext {
 }
 
 pub fn init_physics(resources: &mut Resources) {
-    resources.insert(PhysicsContext::new(vector![0.0, 0.0]));
+    resources.insert(PhysicsContext::new(vector![0.0, 9.8]));
 }
