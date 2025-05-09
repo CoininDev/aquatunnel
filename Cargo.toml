@@ -5,11 +5,11 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.97"
+fastnoise-lite = "1.1.1"
 futures = "0.3.31"
 legion = "0.4.0"
 macroquad = "0.4.14"
 nalgebra = "0.33.2"
-noise = "0.9.0"
 rapier2d = "0.24.0"
 tiled = "0.14.0"
 

@@ -7,10 +7,12 @@ use macroquad::{
 use nalgebra::vector;
 
 use crate::{
-    comps::{AnimationPlayer, Body, Player, Spritesheet, Transform},
-    resources::Time,
-    resources::input::{InputAction, InputContext},
-    resources::physics::PhysicsContext,
+    comps::{AnimationPlayer, Body, Player, Sprite, Spritesheet, Transform},
+    resources::{
+        Time,
+        input::{InputAction, InputContext},
+        physics::PhysicsContext,
+    },
 };
 
 #[system]
@@ -118,6 +120,8 @@ pub fn move_player(
     #[resource] input_ctx: &mut InputContext,
     #[resource] physics_ctx: &mut PhysicsContext,
     player: &Player,
+    transform: &mut Transform,
+    sprite: &mut Sprite,
     body: &Body,
 ) {
     let mut bodies = physics_ctx.bodies.borrow_mut();
@@ -126,6 +130,8 @@ pub fn move_player(
         let velocity = dir * player.speed;
         rb.set_linvel(vector![velocity.x, velocity.y], true);
     }
+    sprite.flip_x = input_ctx.look_direction.x < 0.;
+    transform.rotation = input_ctx.look_direction.to_angle();
 }
 
 #[system(for_each)]

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use fastnoise_lite::{FastNoiseLite, NoiseType};
 use legion::{Resources, Schedule, World, systems::CommandBuffer};
 use macroquad::{
     camera::Camera2D,
@@ -8,7 +9,6 @@ use macroquad::{
     time::get_frame_time,
     window::next_frame,
 };
-use noise::Simplex;
 
 use crate::{
     entitites::populate,
@@ -31,13 +31,19 @@ pub async fn run_game() -> Result<(), String> {
     resources.insert(Track { pos: Vec2::ZERO });
     resources.insert(Textures(HashMap::new()));
     resources.insert(InputContext::new(InputSetup::default()));
+
+    let mut noise = FastNoiseLite::new();
+    noise.set_seed(None);
+    noise.set_noise_type(Some(NoiseType::Perlin));
+
     resources.insert(ChunkManager::new(
-        Simplex::default(),
-        0.0,
+        noise,
+        Vec2::ONE * 40.,
+        0.01,
         IVec2::ONE * 16,
-        Vec2::ONE * 0.32,
-        5,
-        7,
+        Vec2::ONE * 0.16,
+        8,
+        12,
     ));
     resources.insert(Box::new(Camera2D::default()));
     resources.insert(RenderQueue(Vec::new()));
@@ -56,7 +62,7 @@ pub async fn run_game() -> Result<(), String> {
         .add_thread_local(tick::animate_player_system())
         .add_system(chunk::update_player_chunk_system())
         .add_system(chunk::update_monster_chunk_system())
-        .add_system(chunk::load_freed_chunks_system())
+        .add_system(chunk::create_new_chunks_system())
         .add_system(chunk::load_chunks_system())
         .add_system(chunk::unload_chunks_system())
         .add_system(chunk::free_chunks_system())

@@ -11,7 +11,7 @@ use crate::{
 
 #[system]
 pub fn clear_screen() {
-    clear_background(DARKPURPLE);
+    clear_background(DARKBLUE);
 }
 
 #[system]
