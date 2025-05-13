@@ -115,8 +115,8 @@ impl Chunk {
                     cm.chunk_size_in_tiles,
                     cm.tile_size_in_meters,
                 );
-                let world_x: f32 = world_pos.x;
-                let world_y: f32 = world_pos.y;
+                let world_x: f32 = world_pos.x * cm.noise_scale.x;
+                let world_y: f32 = world_pos.y * cm.noise_scale.y;
                 let noise_val = cm.world_noise.get_noise_2d(world_x, world_y);
                 matrix_buffer[(x, y)] = if noise_val < cm.threshold { 0 } else { 1 };
             }
