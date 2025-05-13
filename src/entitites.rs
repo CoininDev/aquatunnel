@@ -22,7 +22,7 @@ pub fn populate(world: &mut World) {
             flip_y: false,
         },
         Player { speed: 2. },
-        Body::new(Vec2::new(0.64 / 2., 0.64 / 2.), true),
+        Body::new(Vec2::new(0.32 / 2., 0.32 / 2.), true),
     ));
 
     //block

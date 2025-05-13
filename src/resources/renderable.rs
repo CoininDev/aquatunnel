@@ -225,3 +225,25 @@ impl Renderable for DebugSprite {
         );
     }
 }
+
+
+impl Renderable for Body {
+    fn z_order(&self) -> f32 {
+        0.
+    }
+
+    fn render(&self, transform: &Transform, _: &Textures) {
+        let dst = calculate_dst(transform.position, self.size, transform.scale * 2.);
+        draw_rectangle_ex(
+            dst.x,
+            dst.y,
+            dst.w,
+            dst.h,
+            DrawRectangleParams {
+                offset: Vec2::ZERO,
+                color: colors::RED,
+                ..Default::default()
+            },
+        );
+    }
+}
