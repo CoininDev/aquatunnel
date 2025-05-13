@@ -104,12 +104,12 @@ pub fn load_chunks(
     let chunks_to_load: Vec<_> = <(Entity, &Chunk, &ChunkBody)>::query()
         .iter(world)
         .filter(|(_, chunk, _)| chunk.pos.distance_squared(cm.player_chunk) < cm.unloading_distance)
-        .filter(|(_, chunk, _)| chunk.state != ChunkState::Loaded)
+        //.filter(|(_, chunk, _)| chunk.state != ChunkState::Loaded)
         .collect();
 
     for (entity, chunk, body) in chunks_to_load {
+        body.load(entity, chunk, cm, pc, cb);
         chunk.load(entity, world, cm, cb);
-        body.load(entity, cm, pc, cb);
     }
 }
 

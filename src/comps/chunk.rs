@@ -170,6 +170,7 @@ impl ChunkBody {
     pub fn load(
         &self,
         e: &Entity,
+        chunk: &Chunk,
         cm: &ChunkManager,
         pc: &mut PhysicsContext,
         cb: &mut CommandBuffer,
@@ -178,7 +179,7 @@ impl ChunkBody {
             return;
         }
 
-        let (body_handles, collider_handles) = self.gen_matrix(cm, pc);
+        let (body_handles, collider_handles) = self.gen_matrix(chunk, cm, pc);
         cb.add_component(
             *e,
             ChunkBody {
@@ -223,48 +224,42 @@ impl ChunkBody {
     }
 
     fn gen_matrix(
-        &self,
-        cm: &ChunkManager,
-        pc: &mut PhysicsContext,
-    ) -> (
-        Matrix<Option<RigidBodyHandle>>,
-        Matrix<Option<ColliderHandle>>,
-    ) {
-        let mut rb_matrix = Matrix::<Option<RigidBodyHandle>>::new(
-            (cm.chunk_size_in_tiles.x + 1) as usize,
-            (cm.chunk_size_in_tiles.y + 1) as usize,
-            None,
-        );
+    &self,
+    chunk: &Chunk,
+    cm: &ChunkManager,
+    pc: &mut PhysicsContext,
+) -> (Matrix<Option<RigidBodyHandle>>, Matrix<Option<ColliderHandle>>) {
+    let size_x = (cm.chunk_size_in_tiles.x + 1) as usize;
+    let size_y = (cm.chunk_size_in_tiles.y + 1) as usize;
 
-        let mut col_matrix = Matrix::<Option<ColliderHandle>>::new(
-            (cm.chunk_size_in_tiles.x + 1) as usize,
-            (cm.chunk_size_in_tiles.y + 1) as usize,
-            None,
-        );
+    let mut rb_matrix   = Matrix::new(size_x, size_y, None);
+    let mut col_matrix  = Matrix::new(size_x, size_y, None);
 
-        for y in 0..=cm.chunk_size_in_tiles.y as usize {
-            for x in 0..=cm.chunk_size_in_tiles.x as usize {
-                let world_pos = calculate_tile_position(
-                    self.pos,
-                    uvec2(x as u32, y as u32),
-                    cm.chunk_size_in_tiles,
-                    cm.tile_size_in_meters,
-                );
-                let world_x: f32 = world_pos.x * cm.noise_scale.x;
-                let world_y: f32 = world_pos.y * cm.noise_scale.y;
-                if cm.world_noise.get_noise_2d(world_x, world_y) >= cm.threshold {
-                    let pos = uvec2(x as u32, y as u32);
-                    let rb = self.create_new_tile_body(pos, cm);
-                    let col = self.create_new_tile_collider(cm);
-                    let (rb_handle, col_handle) = self.insert_tile(rb, col, pc);
-                    rb_matrix.set(x, y, Some(rb_handle));
-                    col_matrix.set(x, y, Some(col_handle));
-                }
+    let og_matrix = match &chunk.matrix {
+        Some(m) => m,
+        None    => return (rb_matrix, col_matrix),
+    };
+    println!("{:?}", og_matrix);
+
+    for y in 0..og_matrix.height {
+        for x in 0..og_matrix.width {
+            let tile = og_matrix[(x, y)];
+            let tile_pos = UVec2::new(x as u32,y as u32);
+            if tile == 0 {
+                continue;
             }
+            
+            let rb = self.create_new_tile_body(tile_pos, cm);
+            let col = self.create_new_tile_collider(cm);
+            let (rb_handle, col_handle) = self.insert_tile(rb, col, pc);
+            rb_matrix[(x,y)] = Some(rb_handle);
+            col_matrix[(x,y)] = Some(col_handle);
         }
-
-        (rb_matrix, col_matrix)
     }
+
+    (rb_matrix, col_matrix)
+}
+
 
     fn clear_matrix(&self, cm: &ChunkManager, pc: &mut PhysicsContext) {
         for y in 0..=cm.chunk_size_in_tiles.y as usize {
@@ -314,6 +309,6 @@ impl ChunkBody {
     }
 
     fn create_new_tile_collider(&self, cm: &ChunkManager) -> Collider {
-        ColliderBuilder::cuboid(cm.tile_size_in_meters.x, cm.tile_size_in_meters.y).build()
+        ColliderBuilder::cuboid(cm.tile_size_in_meters.x / 2., cm.tile_size_in_meters.y / 2.).build()
     }
 }
