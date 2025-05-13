@@ -104,12 +104,21 @@ pub fn load_chunks(
     let chunks_to_load: Vec<_> = <(Entity, &Chunk, &ChunkBody)>::query()
         .iter(world)
         .filter(|(_, chunk, _)| chunk.pos.distance_squared(cm.player_chunk) < cm.unloading_distance)
+<<<<<<< HEAD
         //.filter(|(_, chunk, _)| chunk.state != ChunkState::Loaded)
         .collect();
 
     for (entity, chunk, body) in chunks_to_load {
         body.load(entity, chunk, cm, pc, cb);
         chunk.load(entity, world, cm, cb);
+=======
+        .filter(|(_, chunk, _)| chunk.state != ChunkState::Loaded)
+        .collect();
+
+    for (entity, chunk, body) in chunks_to_load {
+        chunk.load(entity, world, cm, cb);
+        body.load(entity, cm, pc, cb);
+>>>>>>> cc62d05 (Refatora código para otimizar a manipulação de chunks e a renderização de corpos, além de ajustar a escala de ruído e corrigir a inicialização de entidades.)
     }
 }
 
