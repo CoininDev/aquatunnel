@@ -131,7 +131,12 @@ pub fn move_player(
         rb.set_linvel(vector![velocity.x, velocity.y], true);
     }
     sprite.flip_x = input_ctx.look_direction.x < 0.;
-    transform.rotation = input_ctx.look_direction.to_angle();
+    transform.rotation = if input_ctx.look_direction.x < 0. {
+        input_ctx.look_direction.to_angle() + std::f32::consts::PI
+
+    } else {
+        input_ctx.look_direction.to_angle()
+    };
 }
 
 #[system(for_each)]
