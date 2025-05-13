@@ -85,7 +85,7 @@ impl Default for InputSetup {
         InputSetup {
             keybindings,
             move_method: Box::new(WASDMethod),
-            look_method: Box::new(MouseCenterMethod),
+            look_method: Box::new(WASDMethod),
         }
     }
 }
