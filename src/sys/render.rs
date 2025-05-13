@@ -3,8 +3,7 @@ use macroquad::{color::*, math::*, prelude::*};
 
 use crate::{
     comps::{
-        AnimationPlayer, Chunk, DebugSprite, Player, Sprite, Spritesheet, TileMap, TileMapSource,
-        Transform,
+        AnimationPlayer, Body, Chunk, DebugSprite, Player, Sprite, Spritesheet, TileMap, TileMapSource, Transform
     },
     resources::{renderable::Renderable, *},
 };
@@ -67,6 +66,7 @@ pub fn track_player(#[resource] track: &mut Track, _: &Player, t: &Transform) {
 #[read_component(AnimationPlayer)]
 #[read_component(TileMap)]
 #[read_component(TileMapSource)]
+#[read_component(Body)]
 #[read_component(Chunk)]
 pub fn render(world: &mut SubWorld, #[resource] textures: &Textures) {
     let mut renderables: Vec<(&Transform, &dyn Renderable)> = Vec::new();
@@ -104,6 +104,11 @@ pub fn render(world: &mut SubWorld, #[resource] textures: &Textures) {
     chunk_storage
         .iter()
         .for_each(|(t, r)| renderables.push((t, r)));
+
+    #[cfg(debug_assertions)]
+    <(&Transform, &Body)>::query()
+        .iter(world)
+        .for_each(|(t,b)| renderables.push((t, b)));
 
     //Sorting
     renderables.sort_by(|a, b| {

@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use super::{ivec2_to_vec2, uvec2_to_vec2};
+use super::uvec2_to_vec2;
 use fastnoise_lite::FastNoiseLite;
 use legion::Entity;
-use macroquad::math::{I64Vec2, IVec2, UVec2, Vec2};
+use macroquad::math::{IVec2, UVec2, Vec2};
 
 pub struct ChunkManager {
     pub chunks: HashMap<IVec2, Entity>,

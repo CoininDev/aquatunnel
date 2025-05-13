@@ -1,5 +1,5 @@
 use legion::{Entity, query::*, systems::CommandBuffer, world::SubWorld};
-use macroquad::math::{IVec2, Rect, UVec2, Vec2, ivec2, uvec2, vec2};
+use macroquad::math::{IVec2, Rect, UVec2, Vec2, uvec2, vec2};
 use nalgebra::vector;
 use rapier2d::prelude::{
     Collider, ColliderBuilder, ColliderHandle, RigidBody, RigidBodyBuilder, RigidBodyHandle,
@@ -241,6 +241,7 @@ impl ChunkBody {
             (cm.chunk_size_in_tiles.y + 1) as usize,
             None,
         );
+
         for y in 0..=cm.chunk_size_in_tiles.y as usize {
             for x in 0..=cm.chunk_size_in_tiles.x as usize {
                 let world_pos = calculate_tile_position(
@@ -249,8 +250,8 @@ impl ChunkBody {
                     cm.chunk_size_in_tiles,
                     cm.tile_size_in_meters,
                 );
-                let world_x: f32 = world_pos.x;
-                let world_y: f32 = world_pos.y;
+                let world_x: f32 = world_pos.x * cm.noise_scale.x;
+                let world_y: f32 = world_pos.y * cm.noise_scale.y;
                 if cm.world_noise.get_noise_2d(world_x, world_y) >= cm.threshold {
                     let pos = uvec2(x as u32, y as u32);
                     let rb = self.create_new_tile_body(pos, cm);
@@ -269,19 +270,18 @@ impl ChunkBody {
         for y in 0..=cm.chunk_size_in_tiles.y as usize {
             for x in 0..=cm.chunk_size_in_tiles.x as usize {
                 let mut rigid_bodies = pc.bodies.borrow_mut();
-                let rb_handle = self
-                    .body_handles
-                    .get(x, y)
-                    .expect("Erro ao pegar coordenadas em Body Handle")
-                    .expect("Ponto Vazio");
-                rigid_bodies.remove(
-                    rb_handle,
-                    &mut pc.islands.borrow_mut(),
-                    &mut pc.colliders.borrow_mut(),
-                    &mut pc.impulse_joints.borrow_mut(),
-                    &mut pc.multibody_joints.borrow_mut(),
-                    true,
-                );
+                if let Some(pinto_grosso) = self.body_handles.get(x, y) {
+                    if let Some(rb_handle) = pinto_grosso {
+                        rigid_bodies.remove(
+                            *rb_handle,
+                            &mut pc.islands.borrow_mut(),
+                            &mut pc.colliders.borrow_mut(),
+                            &mut pc.impulse_joints.borrow_mut(),
+                            &mut pc.multibody_joints.borrow_mut(),
+                            true,
+                        );
+                    }
+                }
             }
         }
     }

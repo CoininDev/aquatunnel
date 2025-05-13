@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
 use fastnoise_lite::{FastNoiseLite, NoiseType};
-use legion::{Resources, Schedule, World, systems::CommandBuffer};
+use legion::{Resources, Schedule, World};
 use macroquad::{
     camera::Camera2D,
     input::{KeyCode, is_key_down},
-    math::{IVec2, UVec2, Vec2, ivec2},
+    math::{UVec2, Vec2},
     time::get_frame_time,
     window::next_frame,
 };
@@ -33,7 +33,7 @@ pub async fn run_game() -> Result<(), String> {
     resources.insert(InputContext::new(InputSetup::default()));
 
     let mut noise = FastNoiseLite::new();
-    noise.set_seed(Some(15));
+    noise.set_seed(None);
     noise.set_noise_type(Some(NoiseType::Perlin));
 
     resources.insert(ChunkManager::new(

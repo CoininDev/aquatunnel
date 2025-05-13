@@ -1,14 +1,7 @@
-use std::usize;
 
-use legion::{Entity, systems::CommandBuffer};
-use macroquad::math::{IVec2, UVec2, Vec2, ivec2, vec2};
-use nalgebra::vector;
-use rapier2d::prelude::{Collider, ColliderHandle, RigidBody, RigidBodyBuilder, RigidBodyHandle};
+use macroquad::math::{Vec2, vec2};
+use rapier2d::prelude::{ColliderHandle, RigidBodyHandle};
 
-use crate::{
-    common::Matrix,
-    resources::{chunk_manager::ChunkManager, physics::PhysicsContext},
-};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Transform {
