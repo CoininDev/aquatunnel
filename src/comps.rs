@@ -94,8 +94,3 @@ pub struct Switch {
     pub on: bool,
 }
 
-impl Switch {
-    pub fn destroy(&self) {
-        todo!();
-    }
-}

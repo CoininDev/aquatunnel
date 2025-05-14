@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use legion::{Entity, query::*, world::SubWorld};
+use legion::{ query::*, world::SubWorld};
 use macroquad::math::{IVec2, Rect, Vec2};
 
 use crate::comps::{Player, Switch, Transform};
@@ -58,7 +58,7 @@ impl ChunkManager {
                     && !self.chunks.contains_key(&pos)
                 {
                     let rect = self.get_chunk_rect(pos);
-                    let mut chunk = Chunk::new(pos, rect);
+                    let chunk = Chunk::new(pos, rect);
                     self.chunks.insert(pos, chunk);
                 }
             }
