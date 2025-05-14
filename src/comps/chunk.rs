@@ -232,7 +232,6 @@ impl ChunkBody {
     let size_x = (cm.chunk_size_in_tiles.x + 1) as usize;
     let size_y = (cm.chunk_size_in_tiles.y + 1) as usize;
 
-<<<<<<< HEAD
     let mut rb_matrix   = Matrix::new(size_x, size_y, None);
     let mut col_matrix  = Matrix::new(size_x, size_y, None);
 
@@ -248,32 +247,6 @@ impl ChunkBody {
             let tile_pos = UVec2::new(x as u32,y as u32);
             if tile == 0 {
                 continue;
-=======
-        let mut col_matrix = Matrix::<Option<ColliderHandle>>::new(
-            (cm.chunk_size_in_tiles.x + 1) as usize,
-            (cm.chunk_size_in_tiles.y + 1) as usize,
-            None,
-        );
-
-        for y in 0..=cm.chunk_size_in_tiles.y as usize {
-            for x in 0..=cm.chunk_size_in_tiles.x as usize {
-                let world_pos = calculate_tile_position(
-                    self.pos,
-                    uvec2(x as u32, y as u32),
-                    cm.chunk_size_in_tiles,
-                    cm.tile_size_in_meters,
-                );
-                let world_x: f32 = world_pos.x * cm.noise_scale.x;
-                let world_y: f32 = world_pos.y * cm.noise_scale.y;
-                if cm.world_noise.get_noise_2d(world_x, world_y) >= cm.threshold {
-                    let pos = uvec2(x as u32, y as u32);
-                    let rb = self.create_new_tile_body(pos, cm);
-                    let col = self.create_new_tile_collider(cm);
-                    let (rb_handle, col_handle) = self.insert_tile(rb, col, pc);
-                    rb_matrix.set(x, y, Some(rb_handle));
-                    col_matrix.set(x, y, Some(col_handle));
-                }
->>>>>>> cc62d05 (Refatora código para otimizar a manipulação de chunks e a renderização de corpos, além de ajustar a escala de ruído e corrigir a inicialização de entidades.)
             }
             
             let rb = self.create_new_tile_body(tile_pos, cm);
