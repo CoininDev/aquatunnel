@@ -12,6 +12,7 @@ fn conf() -> Conf {
     Conf {
         miniquad_conf: miniquad::conf::Conf {
             window_title: "Aquatunnel".into(),
+
             fullscreen: true,
             ..Default::default()
         },

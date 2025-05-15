@@ -94,22 +94,40 @@ pub fn create_new_chunks(
 #[system]
 #[read_component(Chunk)]
 #[read_component(Monster)]
-#[read_component(ChunkBody)]
 pub fn load_chunks(
     world: &SubWorld,
     #[resource] cm: &ChunkManager,
-    #[resource] pc: &mut PhysicsContext,
     cb: &mut CommandBuffer,
+) {
+    let chunks_to_load: Vec<_> = <(Entity, &Chunk)>::query()
+        .iter(world)
+        .filter(|(_, chunk)| chunk.pos.distance_squared(cm.player_chunk) < cm.unloading_distance)
+        .filter(|(_, chunk)| chunk.state != ChunkState::Loaded)
+        .collect();
+
+    for (entity, chunk) in chunks_to_load {
+        chunk.load(entity, world, cm, cb);
+    }
+}
+
+#[system]
+#[read_component(Chunk)]
+#[read_component(ChunkBody)]
+pub fn load_chunk_bodies(
+    world: &SubWorld,
+    #[resource] cm: &ChunkManager,
+    #[resource] pc: &mut PhysicsContext,
+    cb: &mut CommandBuffer
 ) {
     let chunks_to_load: Vec<_> = <(Entity, &Chunk, &ChunkBody)>::query()
         .iter(world)
         .filter(|(_, chunk, _)| chunk.pos.distance_squared(cm.player_chunk) < cm.unloading_distance)
-        //.filter(|(_, chunk, _)| chunk.state != ChunkState::Loaded)
+        .filter(|(_, chunk, _)| chunk.state == ChunkState::Loaded)
+        .filter(|(_, _, body)| body.state != ChunkState::Loaded)
         .collect();
 
     for (entity, chunk, body) in chunks_to_load {
         body.load(entity, chunk, cm, pc, cb);
-        chunk.load(entity, world, cm, cb);
     }
 }
 

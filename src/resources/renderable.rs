@@ -37,7 +37,7 @@ impl Renderable for Sprite {
         let texture = textures.0.get(self.image_path.as_str());
         let texture = match texture {
             Some(t) => t,
-            None => {
+            _ => {
                 eprintln!("Erro textura");
                 return;
             }
@@ -72,7 +72,7 @@ impl Renderable for (&Spritesheet, &AnimationPlayer) {
         let texture = textures.0.get(self.0.image_path.as_str());
         let texture = match texture {
             Some(t) => t,
-            None => {
+            _ => {
                 eprintln!("Erro textura");
                 return;
             }
@@ -167,12 +167,12 @@ impl Renderable for (&TileMap, &Chunk) {
             for x in 0..matrix.width {
                 let tile_id = matrix.get(x, y).unwrap();
                 let screen_x =
-                    x as f32 * tilemap.tile_size.x * METERS_TO_PIXELS * transform.scale.x
-                        + transform.position.x;
+                    x as f32 * tilemap.tile_size.x * METERS_TO_PIXELS * transform.scale.x;
+                        //+ transform.position.x;
 
                 let screen_y =
-                    y as f32 * tilemap.tile_size.y * METERS_TO_PIXELS * transform.scale.y
-                        + transform.position.y;
+                    y as f32 * tilemap.tile_size.y * METERS_TO_PIXELS * transform.scale.y;
+                        //+ transform.position.y;
                 let src = tilemap
                     .tiles
                     .get(tile_id)

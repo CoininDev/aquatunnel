@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use fastnoise_lite::{FastNoiseLite, NoiseType};
-use legion::{Resources, Schedule, World};
+use legion::{Resources, World};
 use macroquad::{
     camera::Camera2D,
     input::{KeyCode, is_key_down},
@@ -18,7 +18,7 @@ use crate::{
         input::{InputContext, InputSetup},
         physics, *,
     },
-    sys::*,
+    sys,
 };
 
 pub async fn run_game() -> Result<(), String> {
@@ -49,37 +49,11 @@ pub async fn run_game() -> Result<(), String> {
     resources.insert(RenderQueue(Vec::new()));
 
     populate(&mut world);
+    let (mut step_schedule, mut draw_schedule) = sys::populate();
+
 
     // Systems involving macroquad rendering or input requires local thread
-    let mut step_schedule = Schedule::builder()
-        .add_thread_local(tick::input_update_system())
-        .add_system(tick::step_animation_system(0.0))
-        .add_system(render::z_y_axis_player_system())
-        .add_thread_local(tick::step_physics_system())
-        .add_thread_local(tick::integrate_physics_system())
-        .add_thread_local(tick::move_player_system())
-        .add_system(render::track_player_system())
-        .add_thread_local(tick::animate_player_system())
-        .add_system(chunk::update_player_chunk_system())
-        .add_system(chunk::update_monster_chunk_system())
-        .add_system(chunk::create_new_chunks_system())
-        .add_thread_local(chunk::load_chunks_system())
-        .add_thread_local(chunk::unload_chunks_system())
-        .add_system(chunk::free_chunks_system())
-        .flush()
-        .build();
-
-    let mut draw_schedule = Schedule::builder()
-        .add_thread_local(render::camera_system())
-        .add_thread_local(render::clear_screen_system())
-        .add_thread_local(render::render_system())
-        .flush()
-        .add_thread_local(render::camera_ui_system())
-        .add_thread_local(tick::debug_input_system(false))
-        .add_thread_local(render::draw_fps_system())
-        .build();
-
-    load(&mut world, &mut resources).await;
+        load(&mut world, &mut resources).await;
     physics_load(&mut world, &mut resources);
     'running: loop {
         let dt = Time {
