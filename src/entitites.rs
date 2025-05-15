@@ -8,7 +8,6 @@ use macroquad::{
 };
 
 pub fn populate(world: &mut World) {
-    let player_anims = animations();
     //player
     world.push((
         Transform {
