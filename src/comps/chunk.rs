@@ -225,40 +225,41 @@ impl ChunkBody {
     }
 
     fn gen_matrix(
-    &self,
-    chunk: &Chunk,
-    cm: &ChunkManager,
-    pc: &mut PhysicsContext,
-) -> Result<(Matrix<Option<RigidBodyHandle>>, Matrix<Option<ColliderHandle>>), String> {
-    let size_x = (cm.chunk_size_in_tiles.x + 1) as usize;
-    let size_y = (cm.chunk_size_in_tiles.y + 1) as usize;
+        &self,
+        chunk: &Chunk,
+        cm: &ChunkManager,
+        pc: &mut PhysicsContext,
+    ) -> Result<(Matrix<Option<RigidBodyHandle>>, Matrix<Option<ColliderHandle>>), String> {
+        let size_x = (cm.chunk_size_in_tiles.x + 1) as usize;
+        let size_y = (cm.chunk_size_in_tiles.y + 1) as usize;
 
-    let mut rb_matrix   = Matrix::new(size_x, size_y, None);
-    let mut col_matrix  = Matrix::new(size_x, size_y, None);
+        let mut rb_matrix   = Matrix::new(size_x, size_y, None);
+        let mut col_matrix  = Matrix::new(size_x, size_y, None);
 
-    let og_matrix = match &chunk.matrix {
-        Some(m) => m,
-        _ => return Err("Chunk sem matrix ainda".into()),
-    };
+        let og_matrix = match &chunk.matrix {
+            Some(m) => m,
+            _ => return Err("Chunk sem matrix ainda".into()),
+        };
 
-    for y in 0..og_matrix.height {
-        for x in 0..og_matrix.width {
-            let tile = og_matrix[(x, y)];
-            let tile_pos = UVec2::new(x as u32,y as u32);
-            if tile == 0 {
-                continue;
+        for y in 0..og_matrix.height {
+            for x in 0..og_matrix.width {
+                let tile = og_matrix[(x, y)];
+                let tile_pos = UVec2::new(x as u32,y as u32);
+                if tile == 0 {
+                    continue;
+                }
+                
+                let rb = self.create_new_tile_body(tile_pos, cm);
+                let col = self.create_new_tile_collider(cm);
+                let (rb_handle, col_handle) = self.insert_tile(rb, col, pc);
+                rb_matrix[(x,y)] = Some(rb_handle);
+                col_matrix[(x,y)] = Some(col_handle);
             }
-            
-            let rb = self.create_new_tile_body(tile_pos, cm);
-            let col = self.create_new_tile_collider(cm);
-            let (rb_handle, col_handle) = self.insert_tile(rb, col, pc);
-            rb_matrix[(x,y)] = Some(rb_handle);
-            col_matrix[(x,y)] = Some(col_handle);
         }
+
+        Ok((rb_matrix, col_matrix))
     }
 
-    Ok((rb_matrix, col_matrix))
-}
 
 
     fn clear_matrix(&self, cm: &ChunkManager, pc: &mut PhysicsContext) {

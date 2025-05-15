@@ -42,7 +42,7 @@ pub async fn run_game() -> Result<(), String> {
         0.01,
         UVec2::ONE * 16,
         Vec2::ONE * 0.16,
-        1,
+        5,
         12,
     ));
     resources.insert(Box::new(Camera2D::default()));
