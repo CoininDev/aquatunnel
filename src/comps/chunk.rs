@@ -7,7 +7,7 @@ use rapier2d::prelude::{
 
 use crate::{
     common::Matrix,
-    resources::{chunk_manager::ChunkManager, physics::PhysicsContext},
+    resources::{chunk_manager::ChunkManager, physics::PhysicsContext}, sys::{self, chunk::get_world_position_by_chunk},
 };
 
 use super::Monster;
@@ -153,14 +153,14 @@ pub enum ChunkState {
 pub struct ChunkBody {
     pub pos: IVec2,
     pub state: ChunkState,
-    pub body_handles: Matrix<Option<RigidBodyHandle>>,
+    pub body_handle: Option<RigidBodyHandle>,
     pub collider_handles: Matrix<Option<ColliderHandle>>,
 }
 
 impl ChunkBody {
     pub fn new(size: UVec2, pos: IVec2) -> Self {
         Self {
-            body_handles: Matrix::new(size.x as usize, size.y as usize, None),
+            body_handle: None,
             collider_handles: Matrix::new(size.x as usize, size.y as usize, None),
             pos,
             state: ChunkState::Freed,
@@ -179,11 +179,11 @@ impl ChunkBody {
             return;
         }
 
-        if let Ok((body_handles, collider_handles)) = self.gen_matrix(chunk, cm, pc) {
+        if let Ok((body_handle, collider_handles)) = self.gen_matrix(chunk, cm, pc) {
             cb.add_component(
                 *e,
                 ChunkBody {
-                    body_handles,
+                    body_handle,
                     collider_handles,
                     state: ChunkState::Loaded,
                     ..self.clone()
@@ -203,16 +203,12 @@ impl ChunkBody {
             return;
         }
 
-        self.clear_matrix(cm, pc);
+        self.clear_matrix(pc);
 
         cb.add_component(
             *e,
             ChunkBody {
-                body_handles: Matrix::new(
-                    cm.chunk_size_in_tiles.x as usize,
-                    cm.chunk_size_in_tiles.y as usize,
-                    None,
-                ),
+                body_handle: None,
                 collider_handles: Matrix::new(
                     cm.chunk_size_in_tiles.x as usize,
                     cm.chunk_size_in_tiles.y as usize,
@@ -229,18 +225,19 @@ impl ChunkBody {
         chunk: &Chunk,
         cm: &ChunkManager,
         pc: &mut PhysicsContext,
-    ) -> Result<(Matrix<Option<RigidBodyHandle>>, Matrix<Option<ColliderHandle>>), String> {
+    ) -> Result<(Option<RigidBodyHandle>, Matrix<Option<ColliderHandle>>), String> {
         let size_x = (cm.chunk_size_in_tiles.x + 1) as usize;
         let size_y = (cm.chunk_size_in_tiles.y + 1) as usize;
 
-        let mut rb_matrix   = Matrix::new(size_x, size_y, None);
         let mut col_matrix  = Matrix::new(size_x, size_y, None);
 
         let og_matrix = match &chunk.matrix {
             Some(m) => m,
             _ => return Err("Chunk sem matrix ainda".into()),
         };
-
+        
+        let rb = self.create_new_body(cm);
+        let rb = self.insert_new_chunk_body(rb, pc);
         for y in 0..og_matrix.height {
             for x in 0..og_matrix.width {
                 let tile = og_matrix[(x, y)];
@@ -249,72 +246,64 @@ impl ChunkBody {
                     continue;
                 }
                 
-                let rb = self.create_new_tile_body(tile_pos, cm);
-                let col = self.create_new_tile_collider(cm);
-                let (rb_handle, col_handle) = self.insert_tile(rb, col, pc);
-                rb_matrix[(x,y)] = Some(rb_handle);
+                let col = self.create_new_tile_collider(cm, tile_pos);
+                let col_handle = self.insert_tile(rb, col, pc);
                 col_matrix[(x,y)] = Some(col_handle);
             }
         }
 
-        Ok((rb_matrix, col_matrix))
+        Ok((Some(rb), col_matrix))
     }
 
 
 
-    fn clear_matrix(&self, cm: &ChunkManager, pc: &mut PhysicsContext) {
-        for y in 0..=cm.chunk_size_in_tiles.y as usize {
-            for x in 0..=cm.chunk_size_in_tiles.x as usize {
-                let mut rigid_bodies = pc.bodies.borrow_mut();
-                if let Some(pinto_grosso) = self.body_handles.get(x, y) {
-                    if let Some(rb_handle) = pinto_grosso {
-                        rigid_bodies.remove(
-                            *rb_handle,
-                            &mut pc.islands.borrow_mut(),
-                            &mut pc.colliders.borrow_mut(),
-                            &mut pc.impulse_joints.borrow_mut(),
-                            &mut pc.multibody_joints.borrow_mut(),
-                            true,
-                        );
-                    }
-                }
-            }
+    fn clear_matrix(&self, pc: &mut PhysicsContext) {
+        let mut rigid_bodies = pc.bodies.borrow_mut();
+        if let Some(body) = self.body_handle {
+            rigid_bodies.remove(
+                body,
+                &mut pc.islands.borrow_mut(),
+                &mut pc.colliders.borrow_mut(),
+                &mut pc.impulse_joints.borrow_mut(),
+                &mut pc.multibody_joints.borrow_mut(),
+                true,
+            );
         }
+    }
+
+    fn insert_new_chunk_body(&self, rb: RigidBody, pc: &mut PhysicsContext) -> RigidBodyHandle {
+        let mut rigid_bodies = pc.bodies.borrow_mut();
+        let rb_handle = rigid_bodies.insert(rb);
+
+        rb_handle
     }
 
     fn insert_tile(
         &self,
-        rb: RigidBody,
+        rb: RigidBodyHandle,
         col: Collider,
         pc: &mut PhysicsContext,
-    ) -> (RigidBodyHandle, ColliderHandle) {
+    ) -> ColliderHandle {
         let mut rigid_bodies = pc.bodies.borrow_mut();
         let mut colliders = pc.colliders.borrow_mut();
-        let rb_handle = rigid_bodies.insert(rb);
-        let col_handle = colliders.insert_with_parent(col, rb_handle, &mut rigid_bodies);
+        let col_handle = colliders.insert_with_parent(col, rb, &mut rigid_bodies);
 
-        (rb_handle, col_handle)
+        col_handle
     }
 
     
-    fn create_new_tile_body(&self, tile_pos: UVec2, cm: &ChunkManager) -> RigidBody {
-        let world_origin = calculate_tile_position(
-            self.pos,
-            tile_pos,
-            cm.chunk_size_in_tiles,
-            cm.tile_size_in_meters,
-        );
-        // desloca para o centro do tile:
-        let half = cm.tile_size_in_meters / 2.0;
-        let center = vec2(world_origin.x + half.x, world_origin.y + half.y);
-
+    fn create_new_body(&self, cm: &ChunkManager) -> RigidBody {
+        let world_origin = get_world_position_by_chunk(self.pos, cm);
         RigidBodyBuilder::fixed()
-            .translation(vector![center.x, center.y])
+            .translation(vector![world_origin.x, world_origin.y])
             .build()
     }
 
 
-    fn create_new_tile_collider(&self, cm: &ChunkManager) -> Collider {
-        ColliderBuilder::cuboid(cm.tile_size_in_meters.x / 2., cm.tile_size_in_meters.y / 2.).build()
+    fn create_new_tile_collider(&self, cm: &ChunkManager, pos: UVec2) -> Collider {
+        let world_pos = calculate_tile_position(self.pos, pos, cm.chunk_size_in_tiles, cm.tile_size_in_meters);
+        ColliderBuilder::cuboid(cm.tile_size_in_meters.x / 2., cm.tile_size_in_meters.y / 2.)
+            .translation(vector![world_pos.x, world_pos.y])
+            .build()
     }
 }

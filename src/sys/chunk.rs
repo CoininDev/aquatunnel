@@ -22,7 +22,7 @@ fn get_chunk_rect(pos: IVec2, cm: &ChunkManager) -> Rect {
     Rect::new(pos.x, pos.y, size.x, size.y)
 }
 
-fn get_world_position_by_chunk(chunk: IVec2, cm: &ChunkManager) -> Vec2 {
+pub fn get_world_position_by_chunk(chunk: IVec2, cm: &ChunkManager) -> Vec2 {
     ivec2_to_vec2(chunk) * cm.chunk_size_in_meters
 }
 
