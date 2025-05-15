@@ -12,7 +12,7 @@ use crate::{
 
 use super::Monster;
 
-fn calculate_tile_position(
+pub fn calculate_tile_position(
     chunk_pos: IVec2,
     tile_pos: UVec2,
     chunk_size_tiles: UVec2,
@@ -20,7 +20,7 @@ fn calculate_tile_position(
 ) -> Vec2 {
     vec2(
         (chunk_pos.x * chunk_size_tiles.x as i32 + tile_pos.x as i32) as f32 * tile_size_meters.x,
-        (chunk_pos.y * chunk_size_tiles.y as i32 + tile_pos.y as i32) as f32 * tile_size_meters.x,
+        (chunk_pos.y * chunk_size_tiles.y as i32 + tile_pos.y as i32) as f32 * tile_size_meters.y,
     )
 }
 
@@ -93,7 +93,7 @@ impl Chunk {
 
         for (entity, monster) in q.iter(world) {
             if monster.chunk == self.pos {
-                let mut new_monster = monster.clone(); // requer Clone em Monster
+                let mut new_monster = monster.clone();
                 new_monster.active = active;
                 cb.add_component(*entity, new_monster);
             }
@@ -179,16 +179,17 @@ impl ChunkBody {
             return;
         }
 
-        let (body_handles, collider_handles) = self.gen_matrix(chunk, cm, pc);
-        cb.add_component(
-            *e,
-            ChunkBody {
-                body_handles,
-                collider_handles,
-                state: ChunkState::Loaded,
-                ..self.clone()
-            },
-        );
+        if let Ok((body_handles, collider_handles)) = self.gen_matrix(chunk, cm, pc) {
+            cb.add_component(
+                *e,
+                ChunkBody {
+                    body_handles,
+                    collider_handles,
+                    state: ChunkState::Loaded,
+                    ..self.clone()
+                },
+            );
+        }
     }
 
     pub fn unload(
@@ -228,7 +229,7 @@ impl ChunkBody {
     chunk: &Chunk,
     cm: &ChunkManager,
     pc: &mut PhysicsContext,
-) -> (Matrix<Option<RigidBodyHandle>>, Matrix<Option<ColliderHandle>>) {
+) -> Result<(Matrix<Option<RigidBodyHandle>>, Matrix<Option<ColliderHandle>>), String> {
     let size_x = (cm.chunk_size_in_tiles.x + 1) as usize;
     let size_y = (cm.chunk_size_in_tiles.y + 1) as usize;
 
@@ -237,9 +238,8 @@ impl ChunkBody {
 
     let og_matrix = match &chunk.matrix {
         Some(m) => m,
-        None    => return (rb_matrix, col_matrix),
+        _ => return Err("Chunk sem matrix ainda".into()),
     };
-    println!("{:?}", og_matrix);
 
     for y in 0..og_matrix.height {
         for x in 0..og_matrix.width {
@@ -257,7 +257,7 @@ impl ChunkBody {
         }
     }
 
-    (rb_matrix, col_matrix)
+    Ok((rb_matrix, col_matrix))
 }
 
 
@@ -295,18 +295,23 @@ impl ChunkBody {
         (rb_handle, col_handle)
     }
 
+    
     fn create_new_tile_body(&self, tile_pos: UVec2, cm: &ChunkManager) -> RigidBody {
-        let world_pos = calculate_tile_position(
+        let world_origin = calculate_tile_position(
             self.pos,
             tile_pos,
             cm.chunk_size_in_tiles,
             cm.tile_size_in_meters,
         );
+        // desloca para o centro do tile:
+        let half = cm.tile_size_in_meters / 2.0;
+        let center = vec2(world_origin.x + half.x, world_origin.y + half.y);
 
         RigidBodyBuilder::fixed()
-            .translation(vector![world_pos.x, world_pos.y])
+            .translation(vector![center.x, center.y])
             .build()
     }
+
 
     fn create_new_tile_collider(&self, cm: &ChunkManager) -> Collider {
         ColliderBuilder::cuboid(cm.tile_size_in_meters.x / 2., cm.tile_size_in_meters.y / 2.).build()
