@@ -5,7 +5,6 @@ use legion::{Resources, World};
 use macroquad::{
     camera::Camera2D, input::{is_key_down, KeyCode}, math::{UVec2, Vec2}, miniquad::date::now, time::get_frame_time, window::next_frame
 };
-use nalgebra::ComplexField;
 
 use crate::{
     entitites::populate,
@@ -48,9 +47,8 @@ pub async fn run_game() -> Result<(), String> {
     populate(&mut world);
     let (mut step_schedule, mut draw_schedule) = sys::populate();
 
-
     // Systems involving macroquad rendering or input requires local thread
-        load(&mut world, &mut resources).await;
+    load(&mut world, &mut resources).await;
     physics_load(&mut world, &mut resources);
     'running: loop {
         let dt = Time {

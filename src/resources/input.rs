@@ -61,7 +61,6 @@ pub enum RawAction {
     MouseButton(MouseButton),
     MouseButtonUp(MouseButton),
 }
-
 pub struct InputSetup {
     pub keybindings: HashMap<RawAction, InputAction>,
     move_method: Box<dyn AxisMethod>,
@@ -71,8 +70,8 @@ pub struct InputSetup {
 impl Default for InputSetup {
     fn default() -> Self {
         let mut keybindings = HashMap::new();
-        //keybindings.insert(RawAction::Key(KeyCode::D), InputAction::DebugActionOn);
-        //keybindings.insert(RawAction::KeyUp(KeyCode::D), InputAction::DebugActionOff);
+        keybindings.insert(RawAction::Key(KeyCode::F), InputAction::DebugActionOn);
+        keybindings.insert(RawAction::KeyUp(KeyCode::F), InputAction::DebugActionOff);
         keybindings.insert(
             RawAction::MouseButton(MouseButton::Left),
             InputAction::DebugActionOn,

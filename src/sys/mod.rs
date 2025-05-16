@@ -3,6 +3,7 @@ use legion::Schedule;
 pub mod render;
 pub mod tick;
 pub mod chunk;
+pub mod player;
 
 
 pub fn populate() -> (Schedule, Schedule){
@@ -12,9 +13,9 @@ pub fn populate() -> (Schedule, Schedule){
         .add_system(render::z_y_axis_player_system())
         .add_thread_local(tick::step_physics_system())
         .add_thread_local(tick::integrate_physics_system())
-        .add_thread_local(tick::move_player_system())
+        .add_thread_local(player::move_player_system())
         .add_system(render::track_player_system())
-        .add_thread_local(tick::animate_player_system())
+        .add_thread_local(player::animate_player_system())
         .add_system(chunk::update_player_chunk_system())
         .add_system(chunk::update_monster_chunk_system())
         .add_system(chunk::create_new_chunks_system())
