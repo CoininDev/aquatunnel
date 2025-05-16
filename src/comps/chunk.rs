@@ -245,18 +245,32 @@ impl ChunkBody {
             Some(m) => m,
             _ => return Err("Chunk sem matrix ainda".into()),
         };
+
+        let mut visited_matrix = Matrix::<bool>::new(og_matrix.width, og_matrix.height, false);
         
         let rb = self.create_new_body(cm);
         let rb = self.insert_new_chunk_body(rb, pc);
         for y in 0..og_matrix.height {
             for x in 0..og_matrix.width {
                 let tile = og_matrix[(x, y)];
+                if tile == 0 { continue; }
+                if visited_matrix[(x, y)] == true { continue; }
                 let tile_pos = UVec2::new(x as u32,y as u32);
-                if tile == 0 {
-                    continue;
-                }
                 
-                let col = self.create_new_tile_collider(cm, tile_pos);
+                // Colisão por linha de tiles
+                let mut w = 1;
+                while x + w < og_matrix.width 
+                    && og_matrix[(x+w, y)] != 0
+                    && !visited_matrix[(x+w, y)]
+                {
+                    w+=1;
+                }
+
+                for dx in 0..w {
+                    visited_matrix[(dx, y)] = true;
+                }
+
+                let col = self.create_new_tile_collider(cm, tile_pos, w);
                 let col_handle = self.insert_tile(rb, col, pc);
                 col_matrix[(x,y)] = Some(col_handle);
             }
@@ -310,11 +324,20 @@ impl ChunkBody {
     }
 
 
-    fn create_new_tile_collider(&self, cm: &ChunkManager, pos: UVec2) -> Collider {
-        let world_pos = calculate_tile_position_local(pos, cm.tile_size_in_meters);
-        let world_pos = world_pos + (cm.tile_size_in_meters * 0.5);
-        ColliderBuilder::cuboid(cm.tile_size_in_meters.x / 2., cm.tile_size_in_meters.y / 2.)
-            .translation(vector![world_pos.x, world_pos.y])
+    fn create_new_tile_collider(&self, cm: &ChunkManager, initial_pos: UVec2, width: usize) -> Collider {
+        
+        let center_local = vector![
+            (initial_pos.x as f32 + width as f32 /2.) * cm.tile_size_in_meters.x,
+            (initial_pos.y as f32 + 0.5) * cm.tile_size_in_meters.y
+        ];
+
+        let half_extents = vector![
+            (width as f32 * cm.tile_size_in_meters.x) /2.,
+            cm.tile_size_in_meters.y/2.,
+        ];
+
+        ColliderBuilder::cuboid(half_extents.x, half_extents.y)
+            .translation(center_local)
             .build()
     }
 }
