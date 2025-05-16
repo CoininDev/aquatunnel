@@ -7,7 +7,7 @@ use rapier2d::prelude::{
 
 use crate::{
     common::Matrix,
-    resources::{chunk_manager::ChunkManager, physics::PhysicsContext}, sys::{self, chunk::get_world_position_by_chunk},
+    resources::{chunk_manager::ChunkManager, physics::PhysicsContext}, sys::{chunk::get_world_position_by_chunk},
 };
 
 use super::Monster;
