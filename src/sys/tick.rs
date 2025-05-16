@@ -2,7 +2,7 @@ use legion::*;
 use macroquad::{
     color::{self, WHITE},
     math::Vec2,
-    text::{draw_text, get_text_center},
+    text::{draw_text, get_text_center}, time::get_frame_time,
 };
 use nalgebra::vector;
 
@@ -127,13 +127,12 @@ pub fn move_player(
     let mut bodies = physics_ctx.bodies.borrow_mut();
     if let Some(rb) = bodies.get_mut(body.body_handle.expect("Body não carregado")) {
         let dir = input_ctx.move_direction;
-        let velocity = dir * player.speed;
+        let velocity = dir * player.speed * get_frame_time();
         rb.set_linvel(vector![velocity.x, velocity.y], true);
     }
     sprite.flip_x = input_ctx.look_direction.x < 0.;
     transform.rotation = if input_ctx.look_direction.x < 0. {
         input_ctx.look_direction.to_angle() + std::f32::consts::PI
-
     } else {
         input_ctx.look_direction.to_angle()
     };

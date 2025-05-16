@@ -15,7 +15,7 @@ pub fn clear_screen() {
 
 #[system]
 pub fn draw_fps() {
-    #[cfg(debug_assertions)]
+    //#[cfg(debug_assertions)]
     draw_text(format!("FPS: {}", get_fps()).as_str(), 4., 24., 24., WHITE);
 }
 

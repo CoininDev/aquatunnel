@@ -71,8 +71,8 @@ pub struct InputSetup {
 impl Default for InputSetup {
     fn default() -> Self {
         let mut keybindings = HashMap::new();
-        keybindings.insert(RawAction::Key(KeyCode::D), InputAction::DebugActionOn);
-        keybindings.insert(RawAction::KeyUp(KeyCode::D), InputAction::DebugActionOff);
+        //keybindings.insert(RawAction::Key(KeyCode::D), InputAction::DebugActionOn);
+        //keybindings.insert(RawAction::KeyUp(KeyCode::D), InputAction::DebugActionOff);
         keybindings.insert(
             RawAction::MouseButton(MouseButton::Left),
             InputAction::DebugActionOn,
@@ -85,7 +85,7 @@ impl Default for InputSetup {
         InputSetup {
             keybindings,
             move_method: Box::new(WASDMethod),
-            look_method: Box::new(WASDMethod),
+            look_method: Box::new(MouseCenterMethod),
         }
     }
 }
@@ -126,7 +126,7 @@ impl AxisMethod for MouseCenterMethod {
 struct MouseDeltaMethod;
 impl AxisMethod for MouseDeltaMethod {
     fn run(&self) -> Vec2 {
-        mouse_delta_position()
+        -mouse_delta_position().normalize_or_zero()
     }
 }
 
