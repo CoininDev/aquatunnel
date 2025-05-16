@@ -24,6 +24,16 @@ pub fn calculate_tile_position(
     )
 }
 
+pub fn calculate_tile_position_local(
+    tile_pos: UVec2,
+    tile_size_meters: Vec2,
+) -> Vec2 {
+    vec2(
+        tile_pos.x as f32 * tile_size_meters.x,
+        tile_pos.y as f32 * tile_size_meters.y,
+    )
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct Chunk {
     pub pos: IVec2,
@@ -301,7 +311,8 @@ impl ChunkBody {
 
 
     fn create_new_tile_collider(&self, cm: &ChunkManager, pos: UVec2) -> Collider {
-        let world_pos = calculate_tile_position(self.pos, pos, cm.chunk_size_in_tiles, cm.tile_size_in_meters);
+        let world_pos = calculate_tile_position_local(pos, cm.tile_size_in_meters);
+        let world_pos = world_pos + (cm.tile_size_in_meters * 0.5);
         ColliderBuilder::cuboid(cm.tile_size_in_meters.x / 2., cm.tile_size_in_meters.y / 2.)
             .translation(vector![world_pos.x, world_pos.y])
             .build()
