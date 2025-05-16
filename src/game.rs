@@ -3,12 +3,9 @@ use std::collections::HashMap;
 use fastnoise_lite::{FastNoiseLite, NoiseType};
 use legion::{Resources, World};
 use macroquad::{
-    camera::Camera2D,
-    input::{KeyCode, is_key_down},
-    math::{UVec2, Vec2},
-    time::get_frame_time,
-    window::next_frame,
+    camera::Camera2D, input::{is_key_down, KeyCode}, math::{UVec2, Vec2}, miniquad::date::now, time::get_frame_time, window::next_frame
 };
+use nalgebra::ComplexField;
 
 use crate::{
     entitites::populate,
@@ -33,7 +30,7 @@ pub async fn run_game() -> Result<(), String> {
     resources.insert(InputContext::new(InputSetup::default()));
 
     let mut noise = FastNoiseLite::new();
-    noise.set_seed(None);
+    noise.set_seed(Some(now().floor() as i32));
     noise.set_noise_type(Some(NoiseType::Perlin));
 
     resources.insert(ChunkManager::new(
@@ -42,7 +39,7 @@ pub async fn run_game() -> Result<(), String> {
         0.01,
         UVec2::ONE * 16,
         Vec2::ONE * 0.16,
-        5,
+        9,
         12,
     ));
     resources.insert(Box::new(Camera2D::default()));
