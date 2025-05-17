@@ -1,13 +1,10 @@
 use legion::*;
 use macroquad::{
-    color::{self, WHITE},
-    math::Vec2,
-    text::{draw_text, get_text_center}, time::get_frame_time,
+    color::*, text::draw_text,
 };
-use nalgebra::vector;
 
 use crate::{
-    comps::{AnimationPlayer, Body, Player, Sprite, Spritesheet, Transform},
+    comps::*,
     resources::{
         Time,
         input::{InputAction, InputContext},
@@ -31,7 +28,7 @@ pub fn debug_input(#[resource] ctx: &mut InputContext, #[state] state: &mut bool
     }
 
     if *state {
-        draw_text("Bunda", 24., 48., 24., WHITE);
+        draw_text("Debug ativado", 24., 48., 24., WHITE);
     }
 }
 
