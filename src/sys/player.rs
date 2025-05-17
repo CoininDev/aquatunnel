@@ -1,16 +1,15 @@
 use legion::*;
 use macroquad::{
-    color::{self, WHITE},
+    color,
     math::Vec2,
     text::{draw_text, get_text_center}, time::get_frame_time,
 };
 use nalgebra::vector;
 
 use crate::{
-    comps::{AnimationPlayer, Body, Player, Sprite, Spritesheet, Transform},
+    comps::{AnimationPlayer, Body, Player, Sprite, Transform},
     resources::{
-        Time,
-        input::{InputAction, InputContext},
+        input::InputContext,
         physics::PhysicsContext,
     },
 };
@@ -33,10 +32,12 @@ pub fn move_player(
         rb.set_linvel(vector![velocity.x, velocity.y], true);
     }
     sprite.flip_x = input_ctx.look_direction.x < 0.;
-    transform.rotation = if input_ctx.look_direction.x < 0. {
-        input_ctx.look_direction.to_angle() + std::f32::consts::PI
+
+    
+    if input_ctx.look_direction.x < 0. {
+        transform.rotation = input_ctx.look_direction.to_angle() + std::f32::consts::PI
     } else {
-        input_ctx.look_direction.to_angle()
+        transform.rotation = input_ctx.look_direction.to_angle()
     };
 }
 
