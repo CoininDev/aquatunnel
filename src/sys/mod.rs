@@ -1,12 +1,12 @@
 use legion::Schedule;
 
-pub mod render;
-pub mod tick;
 pub mod chunk;
 pub mod player;
+pub mod render;
+pub mod tick;
+pub mod weapons;
 
-
-pub fn populate() -> (Schedule, Schedule){
+pub fn populate() -> (Schedule, Schedule) {
     let step_schedule = Schedule::builder()
         .add_thread_local(tick::input_update_system())
         .add_system(tick::step_animation_system(0.0))
@@ -23,6 +23,8 @@ pub fn populate() -> (Schedule, Schedule){
         .add_thread_local(chunk::load_chunk_bodies_system())
         .add_thread_local(chunk::unload_chunks_system())
         .add_system(chunk::free_chunks_system())
+        .add_thread_local(weapons::init_weapons_system())
+        .add_thread_local(weapons::shoot_system())
         .flush()
         .build();
 

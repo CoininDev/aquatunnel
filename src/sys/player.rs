@@ -2,19 +2,15 @@ use legion::*;
 use macroquad::{
     color,
     math::Vec2,
-    text::{draw_text, get_text_center}, time::get_frame_time,
+    text::{draw_text, get_text_center},
+    time::get_frame_time,
 };
 use nalgebra::vector;
 
 use crate::{
     comps::{AnimationPlayer, Body, Player, Sprite, Transform},
-    resources::{
-        input::InputContext,
-        physics::PhysicsContext,
-    },
+    resources::{input::InputContext, physics::PhysicsContext},
 };
-
-
 
 #[system(for_each)]
 pub fn move_player(
@@ -33,7 +29,6 @@ pub fn move_player(
     }
     sprite.flip_x = input_ctx.look_direction.x < 0.;
 
-    
     if input_ctx.look_direction.x < 0. {
         transform.rotation = input_ctx.look_direction.to_angle() + std::f32::consts::PI
     } else {

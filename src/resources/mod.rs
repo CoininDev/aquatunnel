@@ -6,15 +6,11 @@ pub mod renderable;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use crate::comps::Transform;
 use macroquad::math::IVec2;
 use macroquad::math::UVec2;
 use macroquad::math::Vec2;
 use macroquad::texture::Texture2D;
 pub use renderable::METERS_TO_PIXELS;
-pub use renderable::Renderable;
-
-pub struct RenderQueue(pub Vec<(&'static Transform, &'static dyn Renderable)>);
 
 pub struct Textures(pub HashMap<String, Arc<Texture2D>>);
 

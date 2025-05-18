@@ -19,6 +19,9 @@ pub fn populate(world: &mut World) {
         },
         Player { speed: 100. },
         Body::new(Vec2::new(0.32 / 2., 0.32 / 2.), true),
+        WeaponHolder {
+            weapon: Some(Box::new(Harpoon::default())),
+        },
     ));
 
     //block

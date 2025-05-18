@@ -168,11 +168,11 @@ impl Renderable for (&TileMap, &Chunk) {
                 let tile_id = matrix.get(x, y).unwrap();
                 let screen_x =
                     x as f32 * tilemap.tile_size.x * METERS_TO_PIXELS * transform.scale.x;
-                        //+ transform.position.x;
+                //+ transform.position.x;
 
                 let screen_y =
                     y as f32 * tilemap.tile_size.y * METERS_TO_PIXELS * transform.scale.y;
-                        //+ transform.position.y;
+                //+ transform.position.y;
                 let src = tilemap
                     .tiles
                     .get(tile_id)
@@ -226,7 +226,6 @@ impl Renderable for DebugSprite {
     }
 }
 
-
 impl Renderable for Body {
     fn z_order(&self) -> f32 {
         0.
@@ -245,5 +244,38 @@ impl Renderable for Body {
                 ..Default::default()
             },
         );
+    }
+}
+
+impl Renderable for WeaponHolder {
+    fn z_order(&self) -> f32 {
+        60.
+    }
+
+    fn render(&self, transform: &Transform, textures: &Textures) {
+        let dst = calculate_dst(transform.position, vec2(0.7, 0.7), transform.scale);
+        if let Some(weapon) = self.weapon.as_ref() {
+            let texture = textures.0.get(weapon.image_path().as_str());
+            let texture = match texture {
+                Some(t) => t,
+                _ => {
+                    eprintln!("Erro textura");
+                    return;
+                }
+            };
+            draw_texture_ex(
+                &texture,
+                dst.x,
+                dst.y,
+                WHITE,
+                DrawTextureParams {
+                    dest_size: Some(vec2(dst.w, dst.h)),
+                    rotation: transform.rotation,
+                    flip_x: false,
+                    flip_y: false,
+                    ..Default::default()
+                },
+            );
+        }
     }
 }
