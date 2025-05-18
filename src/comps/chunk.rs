@@ -7,10 +7,11 @@ use rapier2d::prelude::{
 
 use crate::{
     common::Matrix,
-    resources::{chunk_manager::ChunkManager, physics::PhysicsContext}, sys::{chunk::get_world_position_by_chunk},
+    resources::{chunk_manager::ChunkManager, physics::PhysicsContext},
+    sys::chunk::get_world_position_by_chunk,
 };
 
-use super::Monster;
+use super::{Monster, SurfaceType, surface_type_to_bit};
 
 pub fn calculate_tile_position(
     chunk_pos: IVec2,
@@ -24,10 +25,7 @@ pub fn calculate_tile_position(
     )
 }
 
-pub fn calculate_tile_position_local(
-    tile_pos: UVec2,
-    tile_size_meters: Vec2,
-) -> Vec2 {
+pub fn calculate_tile_position_local(tile_pos: UVec2, tile_size_meters: Vec2) -> Vec2 {
     vec2(
         tile_pos.x as f32 * tile_size_meters.x,
         tile_pos.y as f32 * tile_size_meters.y,
@@ -239,7 +237,7 @@ impl ChunkBody {
         let size_x = (cm.chunk_size_in_tiles.x + 1) as usize;
         let size_y = (cm.chunk_size_in_tiles.y + 1) as usize;
 
-        let mut col_matrix  = Matrix::new(size_x, size_y, None);
+        let mut col_matrix = Matrix::new(size_x, size_y, None);
 
         let og_matrix = match &chunk.matrix {
             Some(m) => m,
@@ -247,23 +245,27 @@ impl ChunkBody {
         };
 
         let mut visited_matrix = Matrix::<bool>::new(og_matrix.width, og_matrix.height, false);
-        
+
         let rb = self.create_new_body(cm);
         let rb = self.insert_new_chunk_body(rb, pc);
         for y in 0..og_matrix.height {
             for x in 0..og_matrix.width {
                 let tile = og_matrix[(x, y)];
-                if tile == 0 { continue; }
-                if visited_matrix[(x, y)] == true { continue; }
-                let tile_pos = UVec2::new(x as u32,y as u32);
-                
+                if tile == 0 {
+                    continue;
+                }
+                if visited_matrix[(x, y)] == true {
+                    continue;
+                }
+                let tile_pos = UVec2::new(x as u32, y as u32);
+
                 // Colisão por linha de tiles
                 let mut w = 1;
-                while x + w < og_matrix.width 
-                    && og_matrix[(x+w, y)] != 0
-                    && !visited_matrix[(x+w, y)]
+                while x + w < og_matrix.width
+                    && og_matrix[(x + w, y)] != 0
+                    && !visited_matrix[(x + w, y)]
                 {
-                    w+=1;
+                    w += 1;
                 }
 
                 for dx in 0..w {
@@ -272,14 +274,12 @@ impl ChunkBody {
 
                 let col = self.create_new_tile_collider(cm, tile_pos, w);
                 let col_handle = self.insert_tile(rb, col, pc);
-                col_matrix[(x,y)] = Some(col_handle);
+                col_matrix[(x, y)] = Some(col_handle);
             }
         }
 
         Ok((Some(rb), col_matrix))
     }
-
-
 
     fn clear_matrix(&self, pc: &mut PhysicsContext) {
         let mut rigid_bodies = pc.bodies.borrow_mut();
@@ -315,7 +315,6 @@ impl ChunkBody {
         col_handle
     }
 
-    
     fn create_new_body(&self, cm: &ChunkManager) -> RigidBody {
         let world_origin = get_world_position_by_chunk(self.pos, cm);
         RigidBodyBuilder::fixed()
@@ -323,20 +322,24 @@ impl ChunkBody {
             .build()
     }
 
-
-    fn create_new_tile_collider(&self, cm: &ChunkManager, initial_pos: UVec2, width: usize) -> Collider {
-        
+    fn create_new_tile_collider(
+        &self,
+        cm: &ChunkManager,
+        initial_pos: UVec2,
+        width: usize,
+    ) -> Collider {
         let center_local = vector![
-            (initial_pos.x as f32 + width as f32 /2.) * cm.tile_size_in_meters.x,
+            (initial_pos.x as f32 + width as f32 / 2.) * cm.tile_size_in_meters.x,
             (initial_pos.y as f32 + 0.5) * cm.tile_size_in_meters.y
         ];
 
         let half_extents = vector![
-            (width as f32 * cm.tile_size_in_meters.x) /2.,
-            cm.tile_size_in_meters.y/2.,
+            (width as f32 * cm.tile_size_in_meters.x) / 2.,
+            cm.tile_size_in_meters.y / 2.,
         ];
 
         ColliderBuilder::cuboid(half_extents.x, half_extents.y)
+            .user_data(surface_type_to_bit(SurfaceType::Wall))
             .translation(center_local)
             .build()
     }

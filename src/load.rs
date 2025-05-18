@@ -7,9 +7,8 @@ use nalgebra::vector;
 use rapier2d::prelude::{ColliderBuilder, RigidBodyBuilder};
 
 use crate::{
-    comps::{Body, Sprite, Spritesheet, TileMap, Transform},
-    resources::Textures,
-    resources::physics::PhysicsContext,
+    comps::{Body, Harpoon, Sprite, Spritesheet, TileMap, Transform, Weapon},
+    resources::{Textures, physics::PhysicsContext},
 };
 
 pub async fn load(world: &mut World, resources: &mut Resources) {
@@ -36,6 +35,9 @@ pub async fn load(world: &mut World, resources: &mut Resources) {
         }
     }
 
+    let harpoon = Harpoon::default();
+    img_paths.push(harpoon.image_path());
+
     let futures = img_paths.iter().map(|path| async move {
         let tex = load_texture(path).await.unwrap();
         (path.clone(), Arc::new(tex))
@@ -53,7 +55,7 @@ pub async fn load(world: &mut World, resources: &mut Resources) {
 
 pub fn physics_load(world: &mut World, resources: &mut Resources) {
     let ctx = resources
-        .get_mut::<PhysicsContext>()
+        .get::<PhysicsContext>()
         .expect("load.rs: Recursos de física não inicializados corretamente.");
 
     let mut rigid_bodies = ctx.bodies.borrow_mut();
