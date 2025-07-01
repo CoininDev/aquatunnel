@@ -3,6 +3,7 @@ pub mod chunk_manager;
 pub mod input;
 pub mod physics;
 pub mod renderable;
+pub mod weapons;
 use std::collections::HashMap;
 use std::sync::Arc;
 

@@ -25,6 +25,8 @@ pub fn populate() -> (Schedule, Schedule) {
         .add_system(chunk::free_chunks_system())
         .add_thread_local(weapons::init_weapons_system())
         .add_thread_local(weapons::shoot_system())
+        .add_thread_local(weapons::step_system())
+        .add_thread_local(weapons::bullet_spawn_system())
         .flush()
         .build();
 
