@@ -1,6 +1,14 @@
-use std::cell::{Ref, RefMut};
+use std::{
+    any::Any,
+    cell::{Ref, RefMut},
+};
 
-use legion::{Entity, systems::CommandBuffer};
+use legion::{
+    Entity,
+    query::*,
+    systems::CommandBuffer,
+    world::{self, SubWorld},
+};
 use macroquad::{
     color::{Color, GRAY, WHITE},
     math::{Vec2, vec2},
@@ -12,7 +20,7 @@ use rapier2d::prelude::{
 };
 
 use crate::{
-    comps::{Body, DebugSprite, Transform, Weapon, WeaponContext},
+    comps::{Body, DebugSprite, Transform, Weapon, WeaponContext, WeaponHolder},
     resources::{
         METERS_TO_PIXELS,
         renderable::{Renderable, calculate_dst},
@@ -23,7 +31,7 @@ pub fn surface_type_to_bit(s: SurfaceType) -> u128 {
     s as u128
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum BladeStatus {
     Sleeping,
     Running,
@@ -37,22 +45,37 @@ pub enum SurfaceType {
     Item,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum SurfaceHit {
     Wall,
     Monster(Entity),
     Item(Entity),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Harpoon {
     active: bool,
     blade_status: BladeStatus,
     last_hit: Option<SurfaceHit>,
-    blade_entity: Entity,
+    blade_entity: Option<Entity>,
 }
 
 impl Weapon for Harpoon {
+    fn box_clone(&self) -> Box<dyn Weapon> {
+        Box::new(self.clone())
+    }
+
+    fn set_active(&mut self, active: bool) {
+        self.active = active;
+    }
+
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
+
     fn is_active(&self) -> bool {
         self.active
     }
@@ -61,7 +84,7 @@ impl Weapon for Harpoon {
         "assets/harpoon gun.png".into()
     }
 
-    fn init(&mut self, cb: &mut CommandBuffer, ctx: WeaponContext) {
+    fn init(&self, cb: &mut CommandBuffer, ctx: WeaponContext) {
         let Some(ph) = ctx.physics else {
             eprintln!("Erro> Harpoon exige acesso ao sistema de física");
             return;
@@ -90,18 +113,25 @@ impl Weapon for Harpoon {
                 size: Vec2::ONE * 0.5,
             },
         ));
-        self.blade_entity = blade;
-        self.active = true;
+        let mut nu = self._get_weapon_clone(&ctx);
+        self._modify_clone(
+            |h| {
+                h.blade_entity = Some(blade);
+                h.active = true;
+            },
+            &mut nu,
+        );
+        self._register_changes(nu, cb, &ctx);
     }
 
-    fn step(&mut self, _cb: &mut CommandBuffer, ctx: WeaponContext) {
+    fn step(&self, cb: &mut CommandBuffer, ctx: WeaponContext) {
         let Some(ph) = ctx.physics else {
             eprintln!("Erro> Harpoon exige acesso ao sistema de física");
             return;
         };
         let narrow = ph.narrow_phase.borrow();
-        if self._is_blade_colliding(narrow) {
-            self._fix(ctx.clone());
+        if self._is_blade_colliding(narrow, &ctx) {
+            self._fix(ctx.clone(), cb);
         }
 
         match self.blade_status {
@@ -111,20 +141,22 @@ impl Weapon for Harpoon {
         }
     }
 
-    fn shoot(&mut self, _cb: &mut CommandBuffer, ctx: WeaponContext) {
+    fn shoot(&self, cb: &mut CommandBuffer, ctx: WeaponContext) {
         if ctx.physics.is_none() {
             eprintln!("Erro> Harpoon exige acesso ao sistema de física");
             return;
         }
 
         match self.blade_status {
-            BladeStatus::Sleeping => self._shoot(ctx),
+            BladeStatus::Sleeping => self._shoot(ctx, cb),
             BladeStatus::Running | BladeStatus::Fixed => self._retract(ctx),
         }
     }
 
-    fn exit(&mut self, _cb: &mut CommandBuffer, _ctx: WeaponContext) {
-        self.active = false;
+    fn exit(&self, cb: &mut CommandBuffer, ctx: WeaponContext) {
+        let mut nu = self._get_weapon_clone(&ctx);
+        self._modify_clone(|h| h.active = false, &mut nu);
+        self._register_changes(nu, cb, &ctx);
     }
 }
 
@@ -132,6 +164,7 @@ impl Default for Harpoon {
     fn default() -> Self {
         Harpoon {
             blade_status: BladeStatus::Sleeping,
+            blade_entity: None,
             active: false,
             last_hit: None,
         }
@@ -181,37 +214,101 @@ impl Renderable for Harpoon {
 
 const SHOOT_FORCE: f32 = 10.;
 impl Harpoon {
-    fn _step_sleeping(&mut self, ctx: WeaponContext) {
+    fn _get_blade_handle(&self, world: &SubWorld<'_>) -> RigidBodyHandle {
+        let mut query = <&Body>::query();
+        let body = query
+            .get(world, self.blade_entity.expect("entity does not exist"))
+            .expect("Não existe essa entidade");
+
+        body.body_handle.expect("O body não possui handle")
+    }
+
+    fn _get_blade_col_handle(&self, world: &SubWorld<'_>) -> ColliderHandle {
+        let mut query = <&Body>::query();
+        let body = query
+            .get(world, self.blade_entity.expect("entity does not exist"))
+            .expect("Não existe essa entidade");
+
+        body.collider_handle.expect("O body não possui handle")
+    }
+
+    fn _get_weapon_clone(&self, ctx: &WeaponContext) -> Box<dyn Weapon> {
+        ctx.weapon_holder.weapon.as_ref().unwrap().box_clone()
+    }
+
+    fn _modify_clone(&self, modify: impl FnOnce(&mut Harpoon), nu: &mut Box<dyn Weapon>) {
+        if let Some(harpoon) = nu.as_any_mut().downcast_mut::<Harpoon>() {
+            modify(harpoon);
+        } else {
+            eprintln!("Erro: arma não é Harpoon");
+        }
+    }
+
+    fn _register_changes(&self, nu: Box<dyn Weapon>, cb: &mut CommandBuffer, ctx: &WeaponContext) {
+        cb.add_component(
+            ctx.weapon_holder_entity,
+            WeaponHolder {
+                weapon: Some(nu),
+                ..ctx.weapon_holder.clone()
+            },
+        );
+    }
+
+    fn _step_sleeping(&self, ctx: WeaponContext) {
+        if self.blade_entity == None {
+            return;
+        }
+
+        let world = ctx.world;
         let ph = ctx.physics.unwrap();
         let mut bodies = ph.bodies.borrow_mut();
-        if let Some(rb) = bodies.get_mut(self.blade_handle.unwrap()) {
+        if let Some(rb) = bodies.get_mut(self._get_blade_handle(world)) {
             rb.set_rotation(UnitComplex::from_angle(ctx.rotation), true);
         }
     }
 
-    fn _is_blade_colliding(&self, narrow: Ref<NarrowPhase>) -> bool {
+    fn _is_blade_colliding(&self, narrow: Ref<NarrowPhase>, ctx: &WeaponContext) -> bool {
+        let world = ctx.world;
         narrow
-            .contact_pairs_with(self.blade_col_handle.unwrap())
+            .contact_pairs_with(self._get_blade_col_handle(world))
             .next()
             .is_some()
     }
 
-    fn _shoot(&mut self, ctx: WeaponContext) {
-        self.blade_status = BladeStatus::Running;
+    fn _shoot(&self, ctx: WeaponContext, cb: &mut CommandBuffer) {
+        if self.blade_entity == None {
+            return;
+        }
+
+        let mut nu = self._get_weapon_clone(&ctx);
+        self._modify_clone(
+            |harpoon| {
+                harpoon.blade_status = BladeStatus::Running;
+            },
+            &mut nu,
+        );
+        self._register_changes(nu, cb, &ctx);
+
         let ph = ctx.physics.unwrap();
+        let world = ctx.world;
         let mut bodies = ph.bodies.borrow_mut();
-        if let Some(rb) = bodies.get_mut(self.blade_handle.unwrap()) {
+        if let Some(rb) = bodies.get_mut(self._get_blade_handle(world)) {
             let target = ctx.position - (Vec2::from_angle(ctx.rotation) * SHOOT_FORCE);
             rb.add_force(vector![target.x, target.y], true);
         }
     }
 
-    fn _retract(&mut self, ctx: WeaponContext) {
+    fn _retract(&self, ctx: WeaponContext) {
+        if self.blade_entity == None {
+            return;
+        }
+
         let ph = ctx.physics.unwrap();
+        let world = ctx.world;
         let mut bodies = ph.bodies.borrow_mut();
         let player_handle = ctx.player_body.body_handle;
 
-        let blade_pos = if let Some(rb) = bodies.get_mut(self.blade_handle.unwrap()) {
+        let blade_pos = if let Some(rb) = bodies.get_mut(self._get_blade_handle(world)) {
             rb.lock_translations(false, true);
             let p = rb.position().translation;
             vec2(p.x, p.y)
@@ -230,18 +327,23 @@ impl Harpoon {
         }
     }
 
-    fn _fix(&mut self, ctx: WeaponContext) {
+    fn _fix(&self, ctx: WeaponContext, cb: &mut CommandBuffer) {
+        if self.blade_entity == None {
+            return;
+        }
+
         let ph = ctx.physics.unwrap();
+        let world = ctx.world;
         let mut bodies = ph.bodies.borrow_mut();
         let colliders = ph.colliders.borrow();
         let narrow = ph.narrow_phase.borrow();
 
-        if let Some(rb) = bodies.get_mut(self.blade_handle.unwrap()) {
+        if let Some(rb) = bodies.get_mut(self._get_blade_handle(world)) {
             rb.lock_translations(true, true);
         }
 
-        for contact_pair in narrow.contact_pairs_with(self.blade_col_handle.unwrap()) {
-            let other = if contact_pair.collider1 == self.blade_col_handle.unwrap() {
+        for contact_pair in narrow.contact_pairs_with(self._get_blade_col_handle(world)) {
+            let other = if contact_pair.collider1 == self._get_blade_col_handle(world) {
                 contact_pair.collider2
             } else {
                 contact_pair.collider1
@@ -252,7 +354,14 @@ impl Harpoon {
             match other_collider.user_data {
                 0 => continue,
                 1 => {
-                    self.last_hit = Some(SurfaceHit::Wall);
+                    let mut nu = self._get_weapon_clone(&ctx);
+                    self._modify_clone(
+                        |h| {
+                            h.last_hit = Some(SurfaceHit::Wall);
+                        },
+                        &mut nu,
+                    );
+                    self._register_changes(nu, cb, &ctx);
                     break;
                 }
                 _ => {
