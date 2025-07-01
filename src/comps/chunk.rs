@@ -7,11 +7,15 @@ use rapier2d::prelude::{
 
 use crate::{
     common::Matrix,
-    resources::{chunk_manager::ChunkManager, physics::PhysicsContext},
+    resources::{
+        chunk_manager::ChunkManager,
+        physics::PhysicsContext,
+        weapons::{SurfaceType, surface_type_to_bit},
+    },
     sys::chunk::get_world_position_by_chunk,
 };
 
-use super::{Monster, SurfaceType, surface_type_to_bit};
+use super::Monster;
 
 pub fn calculate_tile_position(
     chunk_pos: IVec2,

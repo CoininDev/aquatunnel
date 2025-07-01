@@ -10,3 +10,8 @@ pub struct Monster {
 pub struct Player {
     pub speed: f32,
 }
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Counter {
+    pub times: i64,
+}

@@ -1,16 +1,25 @@
 use std::collections::HashMap;
 
-use crate::comps::*;
+use crate::{
+    comps::*,
+    resources::weapons::{DebugGun, Harpoon},
+};
 use legion::World;
 use macroquad::{
     color,
-    math::{IVec2, Vec2, vec2},
+    math::{IVec2, Mat3, Vec2, vec2},
 };
 
 pub fn populate(world: &mut World) {
     //player
+    let mut points: HashMap<String, Mat3> = HashMap::new();
+    let weapon = Mat3::from_translation(Vec2::new(0.35, 0.));
+    points.insert("weapon".to_string(), weapon);
     world.push((
-        Transform::default(),
+        Transform {
+            anchor_points: points,
+            ..Default::default()
+        },
         Sprite {
             image_path: "assets/diver1.png".into(),
             z_order: 5.5,
@@ -20,7 +29,11 @@ pub fn populate(world: &mut World) {
         Player { speed: 100. },
         Body::new(Vec2::new(0.32 / 2., 0.32 / 2.), true),
         WeaponHolder {
-            weapon: Some(Box::new(Harpoon::default())),
+            // weapon: Some(Box::new(Harpoon::default())),
+            weapon: Some(Box::new(DebugGun {
+                active: false,
+                cooldown: 0.,
+            })),
         },
     ));
 

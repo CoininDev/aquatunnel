@@ -6,7 +6,7 @@ use crate::{
         AnimationPlayer, Body, Chunk, DebugSprite, Player, Sprite, Spritesheet, TileMap,
         TileMapSource, Transform, WeaponHolder,
     },
-    resources::{renderable::Renderable, *},
+    resources::{renderable::Renderable, weapons::Bullet, *},
 };
 
 #[system]
@@ -70,6 +70,7 @@ pub fn track_player(#[resource] track: &mut Track, _: &Player, t: &Transform) {
 #[read_component(Body)]
 #[read_component(Chunk)]
 #[read_component(WeaponHolder)]
+#[read_component(Bullet)]
 pub fn render(world: &mut SubWorld, #[resource] textures: &Textures) {
     let mut renderables: Vec<(&Transform, &dyn Renderable)> = Vec::new();
 
@@ -116,6 +117,9 @@ pub fn render(world: &mut SubWorld, #[resource] textures: &Textures) {
         .iter(world)
         .for_each(|(t, r)| renderables.push((t, r)));
 
+    <(&Transform, &Bullet)>::query()
+        .iter(world)
+        .for_each(|(t, r)| renderables.push((t, r)));
     //Sorting
     renderables.sort_by(|a, b| {
         let (_, x) = a;
