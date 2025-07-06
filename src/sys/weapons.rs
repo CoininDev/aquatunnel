@@ -115,7 +115,7 @@ pub fn shoot(
 }
 
 #[system]
-#[write_component(WeaponHolder)]
+#[read_component(WeaponHolder)]
 #[read_component(Transform)]
 #[write_component(Body)]
 pub fn step(world: &mut SubWorld, #[resource] pc: &mut PhysicsContext) {
@@ -123,7 +123,7 @@ pub fn step(world: &mut SubWorld, #[resource] pc: &mut PhysicsContext) {
         .iter_mut(world)
         .next();
 
-    let Some(player) = player else {
+    let Some((e, b, t, w)) = player else {
         return;
     };
 
@@ -137,5 +137,39 @@ pub fn step(world: &mut SubWorld, #[resource] pc: &mut PhysicsContext) {
 
     if let Some(weapon) = player.2.weapon.as_mut() {
         weapon.step(ctx);
+    }
+}
+
+#[system]
+#[read_component(WeaponHolder)]
+#[read_component(Transform)]
+#[read_component(Body)]
+pub fn step(
+    world: &SubWorld,
+    #[resource] pc: &mut PhysicsContext,
+    //#[resource] ic: &mut InputContext,
+    cb: &mut CommandBuffer,
+) {
+    let player = <(Entity, &Body, &Transform, &WeaponHolder)>::query()
+        .iter(world)
+        .next();
+
+    let Some((e, b, t, w)) = player else {
+        return;
+    };
+
+    let w_t = get_weapon_transform(t);
+    let ctx = WeaponContext {
+        weapon_holder: w,
+        weapon_holder_entity: *e,
+        world: world,
+        player_body: b,
+        rotation: w_t.rotation,
+        position: w_t.position,
+        physics: Some(pc),
+    };
+
+    if let Some(weapon) = w.weapon.as_ref() {
+        weapon.step(cb, ctx);
     }
 }
