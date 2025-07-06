@@ -28,7 +28,6 @@ pub async fn run_game() -> Result<(), String> {
 
     //Registering physics resources
     physics::init_physics(&mut resources);
-
     resources.insert(Track { pos: Vec2::ZERO });
     resources.insert(Textures(HashMap::new()));
     resources.insert(InputContext::new(InputSetup::default()));

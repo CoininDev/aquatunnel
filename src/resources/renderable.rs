@@ -8,10 +8,11 @@ use macroquad::texture::*;
 use crate::comps::*;
 
 use super::Textures;
+use super::weapons::Bullet;
 
 pub const METERS_TO_PIXELS: f32 = 100.0; // 1 metro = 100 pixels
 
-fn calculate_dst(position: Vec2, size: Vec2, scale: Vec2) -> Rect {
+pub fn calculate_dst(position: Vec2, size: Vec2, scale: Vec2) -> Rect {
     // Corrigindo os cálculos de tamanho
     let sizex = size.x * scale.x * METERS_TO_PIXELS;
     let sizey = size.y * scale.y * METERS_TO_PIXELS;
@@ -253,29 +254,20 @@ impl Renderable for WeaponHolder {
     }
 
     fn render(&self, transform: &Transform, textures: &Textures) {
-        let dst = calculate_dst(transform.position, vec2(0.7, 0.7), transform.scale);
+        //let dst = calculate_dst(transform.position, vec2(0.7, 0.7), transform.scale);
         if let Some(weapon) = self.weapon.as_ref() {
-            let texture = textures.0.get(weapon.image_path().as_str());
-            let texture = match texture {
-                Some(t) => t,
-                _ => {
-                    eprintln!("Erro textura");
-                    return;
-                }
-            };
-            draw_texture_ex(
-                &texture,
-                dst.x,
-                dst.y,
-                WHITE,
-                DrawTextureParams {
-                    dest_size: Some(vec2(dst.w, dst.h)),
-                    rotation: transform.rotation,
-                    flip_x: false,
-                    flip_y: false,
-                    ..Default::default()
-                },
-            );
+            weapon.render(transform, textures);
         }
+    }
+}
+
+impl Renderable for Bullet {
+    fn z_order(&self) -> f32 {
+        90.
+    }
+
+    fn render(&self, transform: &Transform, _textures: &Textures) {
+        let dst = calculate_dst(transform.position, Vec2::ONE * 0.05, Vec2::ONE);
+        draw_circle(dst.x, dst.y, dst.size().x, colors::GREEN);
     }
 }
