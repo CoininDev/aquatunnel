@@ -7,7 +7,7 @@ use nalgebra::vector;
 use rapier2d::prelude::{ColliderBuilder, RigidBodyBuilder};
 
 use crate::{
-    comps::{Body, Harpoon, Sprite, Spritesheet, TileMap, Transform, Weapon},
+    comps::{Body, Sprite, Spritesheet, TileMap, Transform, WeaponHolder},
     resources::{Textures, physics::PhysicsContext},
 };
 
@@ -35,8 +35,14 @@ pub async fn load(world: &mut World, resources: &mut Resources) {
         }
     }
 
-    let harpoon = Harpoon::default();
-    img_paths.push(harpoon.image_path());
+    let mut query = <&WeaponHolder>::query();
+    for holder in query.iter(world) {
+        if let Some(weapon) = &holder.weapon {
+            if !textures.contains_key(&weapon.image_path()) {
+                img_paths.push(weapon.image_path());
+            }
+        }
+    }
 
     let futures = img_paths.iter().map(|path| async move {
         let tex = load_texture(path).await.unwrap();
@@ -61,20 +67,14 @@ pub fn physics_load(world: &mut World, resources: &mut Resources) {
     let mut rigid_bodies = ctx.bodies.borrow_mut();
     let mut colliders = ctx.colliders.borrow_mut();
 
-    let mut query = <(&Transform, &mut Body)>::query();
-    for (transform, body) in query.iter_mut(world) {
-        let mut rb = RigidBodyBuilder::dynamic()
-            .translation(vector![transform.position.x, transform.position.y])
-            .build();
-        if !body.is_dynamic {
-            rb = RigidBodyBuilder::fixed()
-                .translation(vector![transform.position.x, transform.position.y])
-                .build();
-        }
-        let col = ColliderBuilder::cuboid(body.size.x, body.size.y).build();
-        body.body_handle = Some(rigid_bodies.insert(rb));
-        body.collider_handle =
-            Some(colliders.insert_with_parent(col, body.body_handle.unwrap(), &mut rigid_bodies));
+    let mut query = <(&mut Transform, &mut Body)>::query();
+    for (mut transform, body) in query.iter_mut(world) {
+        body.load(
+            crate::comps::BodyType::Rect,
+            &mut transform,
+            &mut rigid_bodies,
+            &mut colliders,
+        );
         #[cfg(debug_assertions)]
         println!(
             "Novo body (dinâmico:{}) criado em {}: {:?}",

@@ -1,23 +1,15 @@
+use macroquad::math::Vec2;
+use nalgebra::vector;
+use rapier2d::prelude::{
+    ColliderBuilder, ColliderHandle, ColliderSet, RigidBodyBuilder, RigidBodyHandle, RigidBodySet,
+};
 
-use macroquad::math::{Vec2, vec2};
-use rapier2d::prelude::{ColliderHandle, RigidBodyHandle};
+use super::Transform;
 
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Transform {
-    pub position: Vec2,
-    pub scale: Vec2,
-    pub rotation: f32,
-}
-
-impl Default for Transform {
-    fn default() -> Transform {
-        Transform {
-            position: vec2(0.0, 0.0),
-            scale: vec2(1.0, 1.0),
-            rotation: 0.0,
-        }
-    }
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum BodyType {
+    Circle,
+    Rect,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -36,5 +28,33 @@ impl Body {
             size,
             is_dynamic,
         }
+    }
+
+    pub fn load(
+        &mut self,
+        body: BodyType,
+        transform: &mut Transform,
+        rigid_bodies: &mut RigidBodySet,
+        colliders: &mut ColliderSet,
+    ) {
+        let mut rb = RigidBodyBuilder::dynamic()
+            .translation(vector![transform.position.x, transform.position.y])
+            .build();
+        if !self.is_dynamic {
+            rb = RigidBodyBuilder::fixed()
+                .translation(vector![transform.position.x, transform.position.y])
+                .build();
+        }
+        let col = match body {
+            BodyType::Circle => ColliderBuilder::ball(self.size.x).build(),
+            BodyType::Rect => ColliderBuilder::cuboid(self.size.x, self.size.y).build(),
+            _ => {
+                eprintln!("Erro: função load não suporta esse tipo de corpo");
+                return;
+            }
+        };
+        self.body_handle = Some(rigid_bodies.insert(rb));
+        self.collider_handle =
+            Some(colliders.insert_with_parent(col, self.body_handle.unwrap(), rigid_bodies));
     }
 }

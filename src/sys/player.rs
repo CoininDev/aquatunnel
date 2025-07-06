@@ -27,13 +27,7 @@ pub fn move_player(
         let velocity = dir * player.speed * get_frame_time();
         rb.set_linvel(vector![velocity.x, velocity.y], true);
     }
-    sprite.flip_x = input_ctx.look_direction.x < 0.;
-
-    if input_ctx.look_direction.x < 0. {
-        transform.rotation = input_ctx.look_direction.to_angle() + std::f32::consts::PI
-    } else {
-        transform.rotation = input_ctx.look_direction.to_angle()
-    };
+    transform.rotation = input_ctx.look_direction.to_angle();
 }
 
 #[system(for_each)]
