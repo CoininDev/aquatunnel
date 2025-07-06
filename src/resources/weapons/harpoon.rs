@@ -129,6 +129,10 @@ impl Weapon for Harpoon {
             eprintln!("Erro> Harpoon exige acesso ao sistema de física");
             return;
         };
+        if !self.blade_entity.is_some() {
+            eprintln!("Erro> Harpoon não possui entidade de lâmina");
+            return;
+        }
         let narrow = ph.narrow_phase.borrow();
         if self._is_blade_colliding(narrow, &ctx) {
             self._fix(ctx.clone(), cb);
