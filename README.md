@@ -2,6 +2,14 @@
 A game made with Rust, Macroquad, Legion, Rapier2D and modular architecture. This is a work in progress project and honestly one of my favourites <3.
 Be a diver, enter in an underwater cave, fight marine creatures and collect rare items. This is a survival roguelite game, with procedural generation, multiples weapons and creatures.
 
+## run it locally:
+Reminder: It is not done yet!!
+```
+git clone https://github.com/CoininDev/aquatunnel.git
+cd aquatunnel
+cargo run --release
+```
+
 ## Explaining some features and technology.
 I am using Legion as an ECS framework. ECS is a design model that compounds the world of a game with entities, components and systems. Entities are everything in the world, which has its components, and the system will run the logic of the game, searching out components and using them in an efficient way.
 ECS design helps me to build a modular structure in the game.
