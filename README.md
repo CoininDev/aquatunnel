@@ -1,9 +1,11 @@
 # Aquatunnel
-A game made with Rust, Macroquad, Legion, Rapier2D and modular architecture. This is a work in progress project and honestly one of my favourites <3.
-Be a diver, enter in an underwater cave, fight marine creatures and collect rare items. This is a survival roguelite game, with procedural generation, multiples weapons and creatures.
+A 2D roguelite survival game made with Rust, using Macroquad, Legion, Rapier2D, and a modular architecture. This is a work-in-progress project — and honestly, one of my favorites <3.
+Play as a diver exploring mysterious underwater caves, battling marine creatures and collecting rare items.
+Aquatunnel is a survival roguelite with procedural generation, multiple weapons, and a variety of creatures.
+
 
 ## run it locally:
-Reminder: It is not done yet!!
+⚠️ This project is still in development!
 ```
 git clone https://github.com/CoininDev/aquatunnel.git
 cd aquatunnel
@@ -28,7 +30,7 @@ files:
 [sys/render.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/sys/render.rs)
 
 ### For input:
-For detecting input, I wished a system that is really flexible, and could be easily change things, and I think I got it, it even can be used in my next projects!
+For detecting input, I wanted a highly flexible input system that would be easy to modify, and I think I’ve achieved that. It’s even reusable for future projects!
 That's how it works:
 There is the InputContext, which is the ECS resource that owns all the input information.
 it has: look and move directions (Vec2), currently active actions (HashSet), and the setup.
@@ -46,8 +48,7 @@ Each chunk has an Chunk, ChunkBody and Tilemap components. The Chunk manages chu
 Chunk as entities is useful because it makes the system much more simple reusing a done model, and enjoying the multithread processing built in in Legion.
 
 The Chunk loading:
-Chunks have 3 states: Loaded, unloaded and destroyed. Loaded chunks have active items, entities and all the blocks, Unloaded ones have unactive item and entities, without any block anymore. Destroyed doesn't exist in memory.
-
+Chunks have 3 states: Loaded, unloaded and destroyed. Loaded chunks have active items, entities and all the blocks, Unloaded ones have unactive item and entities, without any block anymore. Destroyed chunks are completely removed from memory.
 files:
 [sys/chunk.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/sys/chunk.rs)
 [resources/chunk_manager.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/resources/chunk_manager.rs)
