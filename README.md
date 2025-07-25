@@ -28,4 +28,9 @@ I can now easily add and/or remove Input and RawActions, direction strategies ch
 
 ### For procedural generation:
 The map of the game uses a chunk system and noises to create the map, I have tried a bunch of ways to create the chunk system, but the best i've found is Chunks as entities!
-Each chunk has an Chunk, ChunkBody and Tilemap components. The Chunk 
+Each chunk has an Chunk, ChunkBody and Tilemap components. The Chunk manages chunk loading and unloading, ChunkBody deals with the physics of eath block, and Tilemap render the Chunk.
+
+The Chunk loading:
+Chunks have 3 states: Loaded, unloaded and destroyed. Loaded chunks have active items, entities and all the blocks, Unloaded ones have unactive item and entities, without any block anymore. Destroyed doesn't exist in memory.
+
+...
