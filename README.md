@@ -15,6 +15,10 @@ And then, for each frame, we run the Render System. The render system do:
 2. sort it based on the z_order() function of Renderable trait.
 3. run the render() function on order.
 
+files:
+[resources/renderable.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/resources/renderable.rs)
+[sys/render.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/sys/render.rs)
+
 ### For input:
 For detecting input, I wished a system that is really flexible, and could be easily change things, and I think I got it, it even can be used in my next projects!
 That's how it works:
@@ -26,11 +30,17 @@ The move and look direction can be defined by some strategies, such as mouse dir
 
 I can now easily add and/or remove Input and RawActions, direction strategies changing some enums and the AxisMethod trait.
 
+files: [resources/input.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/resources/input.rs)
+
 ### For procedural generation:
 The map of the game uses a chunk system and noises to create the map, I have tried a bunch of ways to create the chunk system, but the best i've found is Chunks as entities!
 Each chunk has an Chunk, ChunkBody and Tilemap components. The Chunk manages chunk loading and unloading, ChunkBody deals with the physics of eath block, and Tilemap render the Chunk.
+Chunk as entities is useful because it makes the system much more simple reusing a done model, and enjoying the multithread processing built in in Legion.
 
 The Chunk loading:
 Chunks have 3 states: Loaded, unloaded and destroyed. Loaded chunks have active items, entities and all the blocks, Unloaded ones have unactive item and entities, without any block anymore. Destroyed doesn't exist in memory.
 
-...
+files:
+[sys/chunk.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/sys/chunk.rs)
+[resources/chunk_manager.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/resources/chunk_manager.rs)
+[comps/chunk.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/comps/chunk.rs)
