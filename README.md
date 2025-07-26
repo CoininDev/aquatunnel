@@ -6,9 +6,10 @@ Aquatunnel is a survival roguelite with procedural generation, multiple weapons,
 
 ## run it locally:
 ⚠️ This project is still in development!
-```
+```bash
 git clone https://github.com/CoininDev/aquatunnel.git
 cd aquatunnel
+git checkout ECSChunkSystem
 cargo run --release
 ```
 
