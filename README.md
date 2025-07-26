@@ -20,13 +20,15 @@ Legion, besides entities and systems, also exists resources, which is universal 
 ### For rendering:
 Before the game starts, we search in our scene if has some Sprite components, which of them will have a path to the image, and with that we create a resource with loaded images.
 
+
 And then, for each frame, we run the Render System. The render system do:
 1. register each renderable entities, such as Sprites, DebugSprites, Tilemaps, etc. And then saves it all as Renderables (a custom trait that defines how to render something).
 2. sort it based on the z_order() function of Renderable trait.
 3. run the render() function on order.
 
 files:
-[resources/renderable.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/resources/renderable.rs)
+[load.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/load.rs) (image loading in the beggining of the game),
+[resources/renderable.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/resources/renderable.rs),
 [sys/render.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/sys/render.rs)
 
 ### For input:
@@ -49,7 +51,8 @@ Chunk as entities is useful because it makes the system much more simple reusing
 
 The Chunk loading:
 Chunks have 3 states: Loaded, unloaded and destroyed. Loaded chunks have active items, entities and all the blocks, Unloaded ones have unactive item and entities, without any block anymore. Destroyed chunks are completely removed from memory.
+
 files:
-[sys/chunk.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/sys/chunk.rs)
-[resources/chunk_manager.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/resources/chunk_manager.rs)
-[comps/chunk.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/comps/chunk.rs)
+[sys/chunk.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/sys/chunk.rs),
+[resources/chunk_manager.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/resources/chunk_manager.rs),
+[comps/chunk.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/comps/chunk.rs),
