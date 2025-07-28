@@ -1,4 +1,7 @@
 # Aquatunnel
+
+![Aquatunnel GIF](https://imgur.com/a/aquatunnel-IFjEIRa)
+
 A 2D roguelite survival game made with Rust, using Macroquad, Legion, Rapier2D, and a modular architecture. This is a work-in-progress project — and honestly, one of my favorites <3.
 Play as a diver exploring mysterious underwater caves, battling marine creatures and collecting rare items.
 Aquatunnel is a survival roguelite with procedural generation, multiple weapons, and a variety of creatures.
