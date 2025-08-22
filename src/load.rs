@@ -3,8 +3,6 @@ use std::sync::Arc;
 use futures::future::join_all;
 use legion::{Resources, World, query::*};
 use macroquad::texture::{Texture2D, load_texture};
-use nalgebra::vector;
-use rapier2d::prelude::{ColliderBuilder, RigidBodyBuilder};
 
 use crate::{
     comps::{Body, Sprite, Spritesheet, TileMap, Transform, WeaponHolder},

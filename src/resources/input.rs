@@ -72,14 +72,14 @@ impl Default for InputSetup {
         let mut keybindings = HashMap::new();
         keybindings.insert(RawAction::Key(KeyCode::F), InputAction::DebugActionOn);
         keybindings.insert(RawAction::KeyUp(KeyCode::F), InputAction::DebugActionOff);
-        keybindings.insert(
-            RawAction::MouseButton(MouseButton::Left),
-            InputAction::DebugActionOn,
-        );
-        keybindings.insert(
-            RawAction::MouseButtonUp(MouseButton::Left),
-            InputAction::DebugActionOff,
-        );
+        // keybindings.insert(
+        //     RawAction::MouseButton(MouseButton::Left),
+        //     InputAction::DebugActionOn,
+        // );
+        // keybindings.insert(
+        //     RawAction::MouseButtonUp(MouseButton::Left),
+        //     InputAction::DebugActionOff,
+        // );
 
         InputSetup {
             keybindings,
