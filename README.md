@@ -30,9 +30,9 @@ And then, for each frame, we run the Render System. The render system do:
 3. run the render() function on order.
 
 files:
-[load.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/load.rs) (image loading in the beggining of the game),
-[resources/renderable.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/resources/renderable.rs),
-[sys/render.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/sys/render.rs)
+[load.rs](https://github.com/CoininDev/aquatunnel/blob/master/src/load.rs) (image loading in the beggining of the game),
+[resources/renderable.rs](https://github.com/CoininDev/aquatunnel/blob/master/src/resources/renderable.rs),
+[sys/render.rs](https://github.com/CoininDev/aquatunnel/blob/master/src/sys/render.rs)
 
 ### For input:
 For detecting input, I wanted a highly flexible input system that would be easy to modify, and I think I’ve achieved that. It’s even reusable for future projects!
@@ -45,7 +45,7 @@ The move and look direction can be defined by some strategies, such as mouse dir
 
 I can now easily add and/or remove Input and RawActions, direction strategies changing some enums and the AxisMethod trait.
 
-files: [resources/input.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/resources/input.rs)
+files: [resources/input.rs](https://github.com/CoininDev/aquatunnel/blob/master/src/resources/input.rs)
 
 ### For procedural generation:
 The map of the game uses a chunk system and noises to create the map, I have tried a bunch of ways to create the chunk system, but the best i've found is Chunks as entities!
@@ -56,6 +56,6 @@ The Chunk loading:
 Chunks have 3 states: Loaded, unloaded and destroyed. Loaded chunks have active items, entities and all the blocks, Unloaded ones have unactive item and entities, without any block anymore. Destroyed chunks are completely removed from memory.
 
 files:
-[sys/chunk.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/sys/chunk.rs),
-[resources/chunk_manager.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/resources/chunk_manager.rs),
-[comps/chunk.rs](https://github.com/CoininDev/aquatunnel/blob/ECSChunkSystem/src/comps/chunk.rs),
+[sys/chunk.rs](https://github.com/CoininDev/aquatunnel/blob/master/src/sys/chunk.rs),
+[resources/chunk_manager.rs](https://github.com/CoininDev/aquatunnel/blob/master/src/resources/chunk_manager.rs),
+[comps/chunk.rs](https://github.com/CoininDev/aquatunnel/blob/master/src/comps/chunk.rs),
