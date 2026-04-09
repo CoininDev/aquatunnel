@@ -29,7 +29,7 @@ pub fn bullet_spawn(
 ) {
     let mut query = <(Entity, &mut Bullet, &mut Body, &mut Counter)>::query();
     for (e, bullet, body, counter) in query.iter_mut(world) {
-        println!("cu");
+        //println!("cu");
         if counter.times <= 0 {
             let mut bodies = pc.bodies.borrow_mut();
             if let Some(rb) = bodies.get_mut(body.body_handle.unwrap()) {
