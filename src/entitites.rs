@@ -1,9 +1,10 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, rc::Rc};
 
 use crate::{
     comps::*,
     resources::weapons::{DebugGun, Harpoon},
 };
+use egui_macroquad::egui;
 use legion::World;
 use macroquad::{
     color,
@@ -66,7 +67,66 @@ pub fn populate(world: &mut World) {
         },
         //TileMapSource { matrix: matrix() },
     ));
+
+    //window
+    world.push((
+        Window {
+            title: "Hello world".into(),
+            build_func: Some(|ui| {
+                let items = vec![
+                    ("🗡️ Espada de Ferro", 1),
+                    ("🛡️ Escudo de Madeira", 1),
+                    ("🧪 Poção de Vida", 5),
+                    ("🪙 Moedas de Ouro", 42),
+                ];
+
+                ui.label(egui::RichText::new("Itens").strong().size(16.0));
+                ui.separator();
+
+                egui::Grid::new("inventory_grid")
+                    .num_columns(2)
+                    .spacing([40.0, 6.0])
+                    .striped(true)
+                    .show(ui, |ui| {
+                        ui.label(egui::RichText::new("Item").underline());
+                        ui.label(egui::RichText::new("Qtd.").underline());
+                        ui.end_row();
+
+                        for (name, qty) in &items {
+                            ui.label(*name);
+                            ui.label(qty.to_string());
+                            ui.end_row();
+                        }
+                    });
+
+                ui.separator();
+                ui.horizontal(|ui| {
+                    ui.label("Total de itens:");
+                    ui.label(
+                        egui::RichText::new(items.len().to_string())
+                            .strong()
+                            .color(egui::Color32::GOLD),
+                    );
+                });
+
+                ui.add_space(4.0);
+                if ui.button("Fechar").clicked() {
+                    // lógica para fechar/ocultar o inventário
+                }
+            })
+        },
+    ));
+    world.push((
+        Window {
+            title: "Hello world 2".into(),
+            build_func: Some(|ui| {
+                ui.label("oi 2");
+            })
+        },
+    ));
 }
+
+
 fn tiles() -> HashMap<u32, IVec2> {
     let mut cu: HashMap<u32, IVec2> = HashMap::new();
     //plane

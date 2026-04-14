@@ -13,6 +13,10 @@ pub struct InputContext {
     pub look_direction: Vec2,
     pub actions: HashSet<InputAction>,
     pub setup: InputSetup,
+    
+    // egui window locks input
+    pub lock_mouse: bool,
+    pub lock_keybd: bool,
 }
 
 impl InputContext {
@@ -21,22 +25,28 @@ impl InputContext {
             move_direction: Vec2::ZERO,
             look_direction: Vec2::ZERO,
             actions: HashSet::new(),
+            lock_mouse: false,
+            lock_keybd: false,
             setup,
         }
     }
 
     pub fn update(&mut self) {
-        self.move_direction = self.setup.move_method.run();
-        self.look_direction = self.setup.look_method.run();
+        let m = MethodContext::new(self.lock_mouse, self.lock_keybd);
+        self.move_direction = self.setup.move_method.run(&m);
+        self.look_direction = self.setup.look_method.run(&m);
+
 
         self.actions.clear();
         for (raw, action) in &self.setup.keybindings {
             let is_pressed = match raw {
-                RawAction::Key(k) => is_key_down(*k),
-                RawAction::MouseButton(b) => is_mouse_button_down(*b),
-                RawAction::KeyUp(k) => is_key_released(*k),
-                RawAction::MouseButtonUp(b) => is_mouse_button_released(*b),
+                RawAction::Key(k)           if !self.lock_keybd => is_key_down(*k),
+                RawAction::MouseButton(b)   if !self.lock_mouse => is_mouse_button_down(*b),
+                RawAction::KeyUp(k)         if !self.lock_keybd => is_key_released(*k),
+                RawAction::MouseButtonUp(b) if !self.lock_mouse => is_mouse_button_released(*b),
+                _ => false
             };
+
             if is_pressed {
                 self.actions.insert(*action);
             }
@@ -91,14 +101,27 @@ impl Default for InputSetup {
 
 /// Uma forma de conseguir uma direção
 /// Pode ser baseada no mouse, ou no WASD, ou num joystick.
+struct MethodContext {
+    lock_mouse: bool,
+    lock_keybd: bool
+}
+
+impl MethodContext {
+    fn new(lock_mouse: bool, lock_keybd: bool) -> MethodContext {
+        MethodContext { lock_mouse, lock_keybd }
+    }
+}
+
 trait AxisMethod {
-    fn run(&self) -> Vec2;
+    fn run(&self, m: &MethodContext) -> Vec2;
 }
 
 #[derive(Clone)]
 struct WASDMethod;
 impl AxisMethod for WASDMethod {
-    fn run(&self) -> Vec2 {
+    fn run(&self, m: &MethodContext) -> Vec2 {
+        if m.lock_keybd { return Vec2::ZERO; }
+
         // -A+D
         let x_signal = -(is_key_down(KeyCode::A) as i32) + (is_key_down(KeyCode::D) as i32);
         // -W+S
@@ -111,7 +134,9 @@ impl AxisMethod for WASDMethod {
 #[derive(Clone)]
 struct MouseCenterMethod;
 impl AxisMethod for MouseCenterMethod {
-    fn run(&self) -> Vec2 {
+    fn run(&self, m: &MethodContext) -> Vec2 {
+        if m.lock_mouse { return Vec2::ZERO; }
+
         let (mouse_x, mouse_y) = mouse_position();
         let center_x = screen_width() / 2.0;
         let center_y = screen_height() / 2.0;
@@ -124,7 +149,8 @@ impl AxisMethod for MouseCenterMethod {
 #[derive(Clone)]
 struct MouseDeltaMethod;
 impl AxisMethod for MouseDeltaMethod {
-    fn run(&self) -> Vec2 {
+    fn run(&self, m: &MethodContext) -> Vec2 {
+        if m.lock_mouse { return Vec2::ZERO; }
         -mouse_delta_position().normalize_or_zero()
     }
 }
@@ -132,7 +158,9 @@ impl AxisMethod for MouseDeltaMethod {
 #[derive(Clone)]
 struct ArrowsMethod;
 impl AxisMethod for ArrowsMethod {
-    fn run(&self) -> Vec2 {
+    fn run(&self, m: &MethodContext) -> Vec2 {
+        if m.lock_keybd { return Vec2::ZERO; }
+
         // -left +right
         let x_signal = -(is_key_down(KeyCode::Left) as i32) + (is_key_down(KeyCode::Right) as i32);
         // -up +down

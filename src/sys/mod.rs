@@ -2,6 +2,7 @@ use legion::Schedule;
 
 pub mod chunk;
 pub mod player;
+pub mod hud;
 pub mod render;
 pub mod tick;
 pub mod weapons;
@@ -28,6 +29,8 @@ pub fn populate() -> (Schedule, Schedule) {
         .add_thread_local(weapons::step_system())
         .add_thread_local(weapons::bullet_spawn_system())
         .flush()
+        .add_thread_local(hud::load_windows_system())
+        .flush()
         .build();
 
     let draw_schedule = Schedule::builder()
@@ -38,6 +41,7 @@ pub fn populate() -> (Schedule, Schedule) {
         .add_thread_local(render::camera_ui_system())
         .add_thread_local(tick::debug_input_system(false))
         .add_thread_local(render::draw_fps_system())
+        .add_thread_local(hud::render_egui_system())
         .build();
 
     (step_schedule, draw_schedule)
