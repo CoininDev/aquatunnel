@@ -4,6 +4,7 @@ pub mod render;
 pub mod tags;
 pub mod weapon;
 pub mod world;
+pub mod hud;
 
 pub use chunk::*;
 pub use physics::*;
@@ -11,3 +12,4 @@ pub use render::*;
 pub use tags::*;
 pub use weapon::*;
 pub use world::*;
+pub use hud::*;
