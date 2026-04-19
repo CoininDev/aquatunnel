@@ -1,8 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use macroquad::input::{
-    KeyCode, MouseButton, is_key_down, is_key_released, is_mouse_button_down,
-    is_mouse_button_released,
+    KeyCode, MouseButton, is_key_down, is_key_pressed, is_key_released, is_mouse_button_down, is_mouse_button_released
 };
 use macroquad::input::{mouse_delta_position, mouse_position};
 use macroquad::math::Vec2;
@@ -41,6 +40,7 @@ impl InputContext {
         for (raw, action) in &self.setup.keybindings {
             let is_pressed = match raw {
                 RawAction::Key(k)           if !self.lock_keybd => is_key_down(*k),
+                RawAction::KeyOnce(k)       if !self.lock_keybd => is_key_pressed(*k),
                 RawAction::MouseButton(b)   if !self.lock_mouse => is_mouse_button_down(*b),
                 RawAction::KeyUp(k)         if !self.lock_keybd => is_key_released(*k),
                 RawAction::MouseButtonUp(b) if !self.lock_mouse => is_mouse_button_released(*b),
@@ -62,12 +62,14 @@ impl InputContext {
 pub enum InputAction {
     DebugActionOn,
     DebugActionOff,
+    InventoryToggle,
 }
 
 #[derive(PartialEq, Eq, Hash, Clone)]
 pub enum RawAction {
     Key(KeyCode),
     KeyUp(KeyCode),
+    KeyOnce(KeyCode),
     MouseButton(MouseButton),
     MouseButtonUp(MouseButton),
 }
@@ -89,6 +91,11 @@ impl Default for InputSetup {
         keybindings.insert(
             RawAction::MouseButtonUp(MouseButton::Left),
             InputAction::DebugActionOff,
+        );
+
+        keybindings.insert(
+            RawAction::KeyOnce(KeyCode::E), 
+            InputAction::InventoryToggle
         );
 
         InputSetup {

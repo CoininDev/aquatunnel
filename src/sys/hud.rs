@@ -1,4 +1,4 @@
-use egui_macroquad::egui::{self, ahash::{HashMap, HashMapExt}};
+use egui_macroquad::egui::{self, Ui, ahash::{HashMap, HashMapExt}};
 use legion::{world::SubWorld, *};
 use crate::{
     comps::Window, resources::input::InputContext,
@@ -10,7 +10,7 @@ pub fn load_windows(
     world: &mut SubWorld,
     #[resource] input: &mut InputContext,
 ) {
-    let mut builds: HashMap<String, fn(&mut egui::Ui)> = HashMap::new();
+    let mut builds: HashMap<String, Box<dyn Fn(&mut Ui) + Send + Sync + 'static >> = HashMap::new();
     let mut windows: Vec<&mut Window> = Vec::new();
 
     <&mut Window>::query()
@@ -26,14 +26,14 @@ pub fn load_windows(
         input.lock_mouse = ctx.wants_pointer_input();
         input.lock_keybd = ctx.wants_keyboard_input();
 
-        for (t, b) in builds.clone().into_iter() {
+        for (t, b) in builds.iter() {
             egui::Window::new(t).show(ctx, b);
         }
     });
 
     for w in windows {
-        if let Some(f) = builds.get(&w.title) {
-            w.build_func = Some(*f);
+        if let Some(f) = builds.remove(&w.title) {
+            w.build_func = Some(f);
         }
     }
 }

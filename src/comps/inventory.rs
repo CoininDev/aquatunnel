@@ -1,6 +1,9 @@
+use egui_macroquad::egui::Ui;
+
 use crate::resources::inventory::Inventory;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct InventoryHolder {
-    pub inventory: Inventory
+    pub inventory: Inventory,
 }
+

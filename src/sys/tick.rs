@@ -18,7 +18,10 @@ pub fn input_update(#[resource] input: &mut InputContext) {
 }
 
 #[system]
-pub fn debug_input(#[resource] ctx: &mut InputContext, #[state] state: &mut bool) {
+pub fn debug_input(
+    #[resource] ctx: &mut InputContext, 
+    #[state] state: &mut bool
+) {
     if ctx.consume_action(InputAction::DebugActionOn) {
         *state = true;
     }

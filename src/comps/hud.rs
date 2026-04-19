@@ -1,7 +1,6 @@
 use egui_macroquad::egui::Ui;
 
-#[derive(Clone)]
 pub struct Window {
     pub title: String,
-    pub build_func: Option<fn(&mut Ui)>,
+    pub build_func: Option<Box<dyn Fn(&mut Ui) + Send + Sync + 'static>>,
 }

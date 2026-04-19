@@ -6,6 +6,7 @@ pub mod hud;
 pub mod render;
 pub mod tick;
 pub mod weapons;
+pub mod inventory;
 
 pub fn populate() -> (Schedule, Schedule) {
     let step_schedule = Schedule::builder()
@@ -38,6 +39,7 @@ pub fn populate() -> (Schedule, Schedule) {
         .add_thread_local(render::clear_screen_system())
         .add_thread_local(render::render_system())
         .flush()
+        .add_thread_local(inventory::inventory_window_system(false, 0))
         .add_thread_local(render::camera_ui_system())
         .add_thread_local(tick::debug_input_system(false))
         .add_thread_local(render::draw_fps_system())

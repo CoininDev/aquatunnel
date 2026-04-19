@@ -5,6 +5,7 @@ pub mod tags;
 pub mod weapon;
 pub mod world;
 pub mod hud;
+pub mod inventory;
 
 pub use chunk::*;
 pub use physics::*;
@@ -13,3 +14,4 @@ pub use tags::*;
 pub use weapon::*;
 pub use world::*;
 pub use hud::*;
+pub use inventory::*;
