@@ -21,7 +21,7 @@ pub fn move_player(
     sprite: &mut Sprite,
     body: &Body,
 ) {
-    let mut bodies = physics_ctx.bodies.borrow_mut();
+    let bodies = &mut physics_ctx.bodies;
     if let Some(rb) = bodies.get_mut(body.body_handle.expect("Body não carregado")) {
         let dir = input_ctx.move_direction;
         let velocity = dir * player.speed * get_frame_time();

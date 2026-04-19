@@ -2,7 +2,7 @@ use macroquad::{conf::Conf, miniquad};
 
 mod common;
 mod comps;
-mod entitites;
+mod entities;
 mod game;
 mod load;
 mod resources;

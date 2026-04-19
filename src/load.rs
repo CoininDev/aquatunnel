@@ -60,20 +60,21 @@ pub async fn load(world: &mut World, resources: &mut Resources) {
 }
 
 pub fn physics_load(world: &mut World, resources: &mut Resources) {
-    let ctx = resources
-        .get::<PhysicsContext>()
+    let mut ctx_wrapper = resources
+        .get_mut::<PhysicsContext>()
         .expect("load.rs: Recursos de física não inicializados corretamente.");
+    let ctx = &mut *ctx_wrapper;
 
-    let mut rigid_bodies = ctx.bodies.borrow_mut();
-    let mut colliders = ctx.colliders.borrow_mut();
+    let rigid_bodies = &mut ctx.bodies;
+    let colliders = &mut ctx.colliders;
 
     let mut query = <(&mut Transform, &mut Body)>::query();
     for (mut transform, body) in query.iter_mut(world) {
         body.load(
             crate::comps::BodyType::Rect,
             &mut transform,
-            &mut rigid_bodies,
-            &mut colliders,
+            rigid_bodies,
+            colliders,
         );
         #[cfg(debug_assertions)]
         println!(

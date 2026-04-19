@@ -66,30 +66,18 @@ pub fn step_animation(
 
 #[system]
 pub fn step_physics(#[resource] p: &mut PhysicsContext) {
-    let gravity = p.gravity;
-    let mut integration_parameters = p.integration_parameters.borrow_mut();
-    let mut islands = p.islands.borrow_mut();
-    let mut broad_phase = p.broad_phase.borrow_mut();
-    let mut narrow_phase = p.narrow_phase.borrow_mut();
-    let mut bodies = p.bodies.borrow_mut();
-    let mut colliders = p.colliders.borrow_mut();
-    let mut impulse_joints = p.impulse_joints.borrow_mut();
-    let mut multibody_joints = p.multibody_joints.borrow_mut();
-    let mut ccd_solver = p.ccd_solver.borrow_mut();
-    let mut query_pipeline = p.query_pipeline.borrow_mut();
-
-    p.pipeline.borrow_mut().step(
-        &gravity,
-        &mut *integration_parameters,
-        &mut *islands,
-        &mut *broad_phase,
-        &mut *narrow_phase,
-        &mut *bodies,
-        &mut *colliders,
-        &mut *impulse_joints,
-        &mut *multibody_joints,
-        &mut *ccd_solver,
-        Some(&mut *query_pipeline),
+    p.pipeline.step(
+        &p.gravity,
+        &mut p.integration_parameters,
+        &mut p.islands,
+        &mut p.broad_phase,
+        &mut p.narrow_phase,
+        &mut p.bodies,
+        &mut p.colliders,
+        &mut p.impulse_joints,
+        &mut p.multibody_joints,
+        &mut p.ccd_solver,
+        Some(&mut p.query_pipeline),
         &(),
         &(),
     );
@@ -105,7 +93,7 @@ pub fn integrate_physics(
         return;
     }
 
-    let bodies = ctx.bodies.borrow();
+    let bodies = &ctx.bodies;
     if let Some(body) = bodies.get(body.body_handle.expect("Body não carregado")) {
         let pos = body.position().translation;
         transform.position.x = pos.x;

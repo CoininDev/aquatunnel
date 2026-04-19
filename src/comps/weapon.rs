@@ -30,7 +30,6 @@ impl Clone for Box<dyn Weapon> {
         self.box_clone()
     }
 }
-#[derive(Clone)]
 pub struct WeaponContext<'a> {
     pub weapon_holder: &'a WeaponHolder,
     pub weapon_holder_entity: Entity,
@@ -38,5 +37,5 @@ pub struct WeaponContext<'a> {
     pub world: &'a SubWorld<'a>,
     pub rotation: f32,
     pub position: Vec2,
-    pub physics: Option<&'a PhysicsContext>,
+    pub physics: Option<&'a mut PhysicsContext>,
 }

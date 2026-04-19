@@ -31,7 +31,7 @@ pub fn bullet_spawn(
     for (e, bullet, body, counter) in query.iter_mut(world) {
         //println!("cu");
         if counter.times <= 0 {
-            let mut bodies = pc.bodies.borrow_mut();
+            let bodies = &mut pc.bodies;
             if let Some(rb) = bodies.get_mut(body.body_handle.unwrap()) {
                 let impulse = bullet.velocity;
                 let impulse = Vector2::new(impulse.x, impulse.y);

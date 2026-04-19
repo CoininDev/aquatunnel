@@ -62,10 +62,7 @@ pub fn create_new_chunks(
             let pos = cm.player_chunk + IVec2::new(dx, dy);
 
             if pos.distance_squared(cm.player_chunk) < cm.unloading_distance
-                && !<&Chunk>::query()
-                    .iter(world)
-                    .find(|c| c.pos == pos)
-                    .is_some()
+                && !cm.chunks.contains_key(&pos)
             {
                 let rect = get_chunk_rect(pos, cm);
                 cm.chunks.insert(

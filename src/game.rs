@@ -12,7 +12,7 @@ use macroquad::{
 };
 
 use crate::{
-    entitites::populate,
+    entities::populate,
     load::{load, physics_load},
     resources::{
         chunk_manager::ChunkManager,

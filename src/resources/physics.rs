@@ -1,38 +1,36 @@
-use std::{cell::RefCell, sync::Arc};
-
 use legion::Resources;
 use rapier2d::prelude::*;
 
 pub struct PhysicsContext {
     pub gravity: Vector<f32>,
-    pub pipeline: Arc<RefCell<PhysicsPipeline>>,
-    pub integration_parameters: Arc<RefCell<IntegrationParameters>>,
-    pub islands: Arc<RefCell<IslandManager>>,
-    pub broad_phase: Arc<RefCell<DefaultBroadPhase>>,
-    pub narrow_phase: Arc<RefCell<NarrowPhase>>,
-    pub bodies: Arc<RefCell<RigidBodySet>>,
-    pub colliders: Arc<RefCell<ColliderSet>>,
-    pub impulse_joints: Arc<RefCell<ImpulseJointSet>>,
-    pub multibody_joints: Arc<RefCell<MultibodyJointSet>>,
-    pub ccd_solver: Arc<RefCell<CCDSolver>>,
-    pub query_pipeline: Arc<RefCell<QueryPipeline>>,
+    pub pipeline: PhysicsPipeline,
+    pub integration_parameters: IntegrationParameters,
+    pub islands: IslandManager,
+    pub broad_phase: DefaultBroadPhase,
+    pub narrow_phase: NarrowPhase,
+    pub bodies: RigidBodySet,
+    pub colliders: ColliderSet,
+    pub impulse_joints: ImpulseJointSet,
+    pub multibody_joints: MultibodyJointSet,
+    pub ccd_solver: CCDSolver,
+    pub query_pipeline: QueryPipeline,
 }
 
 impl PhysicsContext {
     fn new(gravity: Vector<f32>) -> Self {
         PhysicsContext {
             gravity,
-            pipeline: Arc::new(RefCell::new(PhysicsPipeline::default())),
-            integration_parameters: Arc::new(RefCell::new(IntegrationParameters::default())),
-            islands: Arc::new(RefCell::new(IslandManager::default())),
-            broad_phase: Arc::new(RefCell::new(DefaultBroadPhase::default())),
-            narrow_phase: Arc::new(RefCell::new(NarrowPhase::default())),
-            bodies: Arc::new(RefCell::new(RigidBodySet::default())),
-            colliders: Arc::new(RefCell::new(ColliderSet::default())),
-            impulse_joints: Arc::new(RefCell::new(ImpulseJointSet::default())),
-            multibody_joints: Arc::new(RefCell::new(MultibodyJointSet::default())),
-            ccd_solver: Arc::new(RefCell::new(CCDSolver::default())),
-            query_pipeline: Arc::new(RefCell::new(QueryPipeline::default())),
+            pipeline: PhysicsPipeline::default(),
+            integration_parameters: IntegrationParameters::default(),
+            islands: IslandManager::default(),
+            broad_phase: DefaultBroadPhase::default(),
+            narrow_phase: NarrowPhase::default(),
+            bodies: RigidBodySet::default(),
+            colliders: ColliderSet::default(),
+            impulse_joints: ImpulseJointSet::default(),
+            multibody_joints: MultibodyJointSet::default(),
+            ccd_solver: CCDSolver::default(),
+            query_pipeline: QueryPipeline::default(),
         }
     }
 }

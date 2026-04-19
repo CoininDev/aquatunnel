@@ -18,17 +18,12 @@ pub struct Bullet {
 
 impl Bullet {
     pub fn die(&self, ctx: &mut PhysicsContext, my_handle: RigidBodyHandle) {
-        let mut bodies = ctx.bodies.borrow_mut();
-        let mut islands = ctx.islands.borrow_mut();
-        let mut colliders = ctx.colliders.borrow_mut();
-        let mut impulse_joints = ctx.impulse_joints.borrow_mut();
-        let mut multibody_joints = ctx.multibody_joints.borrow_mut();
-        bodies.remove(
+        ctx.bodies.remove(
             my_handle,
-            &mut islands,
-            &mut colliders,
-            &mut impulse_joints,
-            &mut multibody_joints,
+            &mut ctx.islands,
+            &mut ctx.colliders,
+            &mut ctx.impulse_joints,
+            &mut ctx.multibody_joints,
             true,
         );
     }
@@ -92,8 +87,9 @@ impl Weapon for DebugGun {
             return;
         }
 
-        let mut rigid_bodies = ctx.physics.unwrap().bodies.borrow_mut();
-        let mut colliders = ctx.physics.unwrap().colliders.borrow_mut();
+        let physics = ctx.physics.unwrap();
+        let rigid_bodies = &mut physics.bodies;
+        let colliders = &mut physics.colliders;
 
         let mut b = Body::new(Vec2::ONE * 0.05, true);
         let mut t = Transform {
@@ -103,8 +99,8 @@ impl Weapon for DebugGun {
         b.load(
             crate::comps::BodyType::Circle,
             &mut t,
-            &mut rigid_bodies,
-            &mut colliders,
+            rigid_bodies,
+            colliders,
         );
         cb.push((
             t,

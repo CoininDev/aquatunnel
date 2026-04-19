@@ -286,22 +286,20 @@ impl ChunkBody {
     }
 
     fn clear_matrix(&self, pc: &mut PhysicsContext) {
-        let mut rigid_bodies = pc.bodies.borrow_mut();
         if let Some(body) = self.body_handle {
-            rigid_bodies.remove(
+            pc.bodies.remove(
                 body,
-                &mut pc.islands.borrow_mut(),
-                &mut pc.colliders.borrow_mut(),
-                &mut pc.impulse_joints.borrow_mut(),
-                &mut pc.multibody_joints.borrow_mut(),
+                &mut pc.islands,
+                &mut pc.colliders,
+                &mut pc.impulse_joints,
+                &mut pc.multibody_joints,
                 true,
             );
         }
     }
 
     fn insert_new_chunk_body(&self, rb: RigidBody, pc: &mut PhysicsContext) -> RigidBodyHandle {
-        let mut rigid_bodies = pc.bodies.borrow_mut();
-        let rb_handle = rigid_bodies.insert(rb);
+        let rb_handle = pc.bodies.insert(rb);
 
         rb_handle
     }
@@ -312,9 +310,7 @@ impl ChunkBody {
         col: Collider,
         pc: &mut PhysicsContext,
     ) -> ColliderHandle {
-        let mut rigid_bodies = pc.bodies.borrow_mut();
-        let mut colliders = pc.colliders.borrow_mut();
-        let col_handle = colliders.insert_with_parent(col, rb, &mut rigid_bodies);
+        let col_handle = pc.colliders.insert_with_parent(col, rb, &mut pc.bodies);
 
         col_handle
     }
