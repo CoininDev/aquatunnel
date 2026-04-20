@@ -64,6 +64,22 @@ pub fn step_animation(
     *sprite_time += time.delta;
 }
 
+#[system(for_each)]
+pub fn load_uninitialized_bodies(
+    #[resource] ctx: &mut PhysicsContext,
+    transform: &mut Transform,
+    body: &mut Body,
+) {
+    if body.body_handle.is_none() {
+        body.load(
+            crate::comps::BodyType::Rect,
+            transform,
+            &mut ctx.bodies,
+            &mut ctx.colliders,
+        );
+    }
+}
+
 #[system]
 pub fn step_physics(#[resource] p: &mut PhysicsContext) {
     p.pipeline.step(

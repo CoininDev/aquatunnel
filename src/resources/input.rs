@@ -63,6 +63,7 @@ pub enum InputAction {
     DebugActionOn,
     DebugActionOff,
     InventoryToggle,
+    Interact,
 }
 
 #[derive(PartialEq, Eq, Hash, Clone)]
@@ -82,8 +83,7 @@ pub struct InputSetup {
 impl Default for InputSetup {
     fn default() -> Self {
         let mut keybindings = HashMap::new();
-        keybindings.insert(RawAction::Key(KeyCode::F), InputAction::DebugActionOn);
-        keybindings.insert(RawAction::KeyUp(KeyCode::F), InputAction::DebugActionOff);
+        keybindings.insert(RawAction::KeyOnce(KeyCode::F), InputAction::Interact);
         keybindings.insert(
             RawAction::MouseButton(MouseButton::Left),
             InputAction::DebugActionOn,

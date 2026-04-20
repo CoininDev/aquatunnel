@@ -10,12 +10,14 @@ pub mod inventory;
 
 pub fn populate() -> (Schedule, Schedule) {
     let step_schedule = Schedule::builder()
+        .add_thread_local(tick::load_uninitialized_bodies_system())
         .add_thread_local(tick::input_update_system())
         .add_system(tick::step_animation_system(0.0))
         .add_system(render::z_y_axis_player_system())
         .add_thread_local(tick::step_physics_system())
         .add_thread_local(tick::integrate_physics_system())
         .add_thread_local(player::move_player_system())
+        .add_thread_local(inventory::interact_pickup_system())
         .add_system(render::track_player_system())
         .add_thread_local(player::animate_player_system())
         .add_system(chunk::update_player_chunk_system())
@@ -38,8 +40,11 @@ pub fn populate() -> (Schedule, Schedule) {
         .add_thread_local(render::camera_system())
         .add_thread_local(render::clear_screen_system())
         .add_thread_local(render::render_system())
-        .flush()
-        .add_thread_local(inventory::inventory_window_system(false, 0))
+        .add_thread_local(inventory::inventory_window_system(
+            false,
+            std::sync::Arc::new(std::sync::Mutex::new(Vec::new())),
+        ))
+        .add_thread_local(hud::process_gui_commands_system())
         .add_thread_local(render::camera_ui_system())
         .add_thread_local(tick::debug_input_system(false))
         .add_thread_local(render::draw_fps_system())

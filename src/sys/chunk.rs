@@ -91,6 +91,7 @@ pub fn create_new_chunks(
 #[system]
 #[read_component(Chunk)]
 #[read_component(Monster)]
+#[read_component(crate::comps::WorldItem)]
 pub fn load_chunks(
     world: &SubWorld,
     #[resource] cm: &ChunkManager,
@@ -132,6 +133,7 @@ pub fn load_chunk_bodies(
 #[read_component(Chunk)]
 #[read_component(Monster)]
 #[read_component(ChunkBody)]
+#[read_component(crate::comps::WorldItem)]
 pub fn unload_chunks(
     world: &SubWorld,
     #[resource] cm: &ChunkManager,
@@ -156,13 +158,26 @@ pub fn unload_chunks(
 #[read_component(Chunk)]
 #[read_component(Transform)]
 #[read_component(Monster)]
-pub fn free_chunks(world: &SubWorld, #[resource] cm: &ChunkManager, cb: &mut CommandBuffer) {
-    let chunks_to_free: Vec<_> = <(Entity, &Chunk)>::query()
+#[read_component(ChunkBody)]
+#[read_component(crate::comps::WorldItem)]
+pub fn free_chunks(
+    world: &SubWorld,
+    #[resource] cm: &mut ChunkManager,
+    #[resource] pc: &mut PhysicsContext,
+    cb: &mut CommandBuffer,
+) {
+    let chunks_to_free: Vec<_> = <(Entity, &Chunk, &ChunkBody)>::query()
         .iter(world)
-        .filter(|(_, chunk)| chunk.pos.distance_squared(cm.player_chunk) >= cm.freeing_distance)
+        .filter(|(_, chunk, _)| {
+            chunk.pos.distance_squared(cm.player_chunk) >= cm.freeing_distance
+        })
+        .map(|(e, c, b)| (*e, c.clone(), b.clone()))
         .collect();
 
-    for (entity, chunk) in chunks_to_free {
-        chunk.free(entity, world, cb);
+    for (entity, chunk, body) in chunks_to_free {
+        // Ensure physics are cleared if they were still loaded
+        body.unload(&entity, cm, pc, cb);
+        chunk.free(&entity, world, cb);
+        cm.chunks.remove(&chunk.pos);
     }
 }

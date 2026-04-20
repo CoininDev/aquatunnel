@@ -5,6 +5,8 @@ pub mod physics;
 pub mod inventory;
 pub mod renderable;
 pub mod weapons;
+pub mod gui_commands;
+pub use gui_commands::GuiCommandBuffer;
 use std::collections::HashMap;
 use std::sync::Arc;
 

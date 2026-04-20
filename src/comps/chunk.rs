@@ -64,9 +64,10 @@ impl Chunk {
 
         if self.state == ChunkState::Unloaded {
             self.set_inchunk_monsters_active(world, cb, true);
+            self.set_inchunk_items_active(world, cb, true);
         }
         if self.state == ChunkState::Freed {
-            self.spawn(cb);
+            self.spawn(&matrix, cm, cb);
         }
 
         cb.add_component(
@@ -84,6 +85,7 @@ impl Chunk {
             return;
         }
         self.set_inchunk_monsters_active(world, cb, false);
+        self.set_inchunk_items_active(world, cb, false);
         cb.add_component(
             *e,
             Chunk {
@@ -96,6 +98,7 @@ impl Chunk {
 
     pub fn free(&self, e: &Entity, world: &SubWorld, cb: &mut CommandBuffer) {
         self.destroy_inchunk_monsters(world, cb);
+        self.destroy_inchunk_items(world, cb);
         cb.remove(*e);
     }
 
@@ -145,8 +148,69 @@ impl Chunk {
         }
     }
 
-    // Será implementada quando os monstros estiverem prontos
-    fn spawn(&self, _cb: &mut CommandBuffer) {}
+    fn set_inchunk_items_active(&self, world: &SubWorld, cb: &mut CommandBuffer, active: bool) {
+        let mut q = <(Entity, &crate::comps::WorldItem)>::query();
+        for (entity, item) in q.iter(world) {
+            if item.chunk == self.pos {
+                let mut new_item = item.clone();
+                new_item.active = active;
+                cb.add_component(*entity, new_item);
+            }
+        }
+    }
+
+    fn destroy_inchunk_items(&self, world: &SubWorld, cb: &mut CommandBuffer) {
+        let mut q = <(Entity, &crate::comps::WorldItem)>::query();
+        for (e, i) in q.iter(world) {
+            if i.chunk == self.pos {
+                cb.remove(*e);
+            }
+        }
+    }
+
+    fn spawn(&self, matrix: &Matrix<u32>, cm: &ChunkManager, cb: &mut CommandBuffer) {
+        for y in 0..matrix.height {
+            for x in 0..matrix.width {
+                if matrix[(x, y)] == 0 {
+                    if macroquad::rand::gen_range(0.0f32, 1.0f32) < 0.0005 {
+                        let tile_pos = UVec2::new(x as u32, y as u32);
+                        let world_pos = calculate_tile_position(
+                            self.pos,
+                            tile_pos,
+                            cm.chunk_size_in_tiles,
+                            cm.tile_size_in_meters,
+                        );
+
+                        cb.push((
+                            crate::comps::Transform {
+                                position: world_pos,
+                                ..Default::default()
+                            },
+                            crate::comps::Body::new(Vec2::new(0.1, 0.1), true),
+                            crate::comps::Sprite {
+                                image_path: "assets/gun.png".into(),
+                                z_order: 1.0,
+                                flip_x: false,
+                                flip_y: false,
+                            },
+                            crate::comps::WorldItem {
+                                item: crate::resources::inventory::ItemDef {
+                                    name: "Arma Debug".into(),
+                                    data: vec![],
+                                    use_func: Some(|_cmd, _context| {
+                                        println!("Usando arma debug!");
+                                    }),
+                                },
+                                quantity: 1,
+                                chunk: self.pos,
+                                active: true,
+                            },
+                        ));
+                    }
+                }
+            }
+        }
+    }
 }
 
 /// a Chunk can be in 3 states:
@@ -273,7 +337,7 @@ impl ChunkBody {
                 }
 
                 for dx in 0..w {
-                    visited_matrix[(dx, y)] = true;
+                    visited_matrix[(x + dx, y)] = true;
                 }
 
                 let col = self.create_new_tile_collider(cm, tile_pos, w);

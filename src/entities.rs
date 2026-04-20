@@ -73,57 +73,6 @@ pub fn populate(world: &mut World) {
         },
         //TileMapSource { matrix: matrix() },
     ));
-
-    //window
-    // world.push((
-    //     Window {
-    //         title: "Hello world".into(),
-    //         build_func: Some(|ui| {
-    //             let items = vec![
-    //                 ("🗡️ Espada de Ferro", 1),
-    //                 ("🛡️ Escudo de Madeira", 1),
-    //                 ("🧪 Poção de Vida", 5),
-    //                 ("🪙 Moedas de Ouro", 42),
-    //             ];
-
-    //             ui.label(egui::RichText::new("Itens").strong().size(16.0));
-    //             ui.separator();
-
-    //             egui::Grid::new("inventory_grid")
-    //                 .num_columns(2)
-    //                 .spacing([40.0, 6.0])
-    //                 .striped(true)
-    //                 .show(ui, |ui| {
-    //                     ui.label(egui::RichText::new("Usar").underline());
-    //                     ui.label(egui::RichText::new("Item").underline());
-    //                     ui.label(egui::RichText::new("Qtd.").underline());
-    //                     ui.end_row();
-
-    //                     for (name, qty) in &items {
-    //                         if ui.button("Usar").clicked() { println!("Usando {name}"); }
-    //                         ui.label(*name);
-    //                         ui.label(qty.to_string());
-    //                         ui.end_row();
-    //                     }
-    //                 });
-
-    //             ui.separator();
-    //             ui.horizontal(|ui| {
-    //                 ui.label("Total de itens:");
-    //                 ui.label(
-    //                     egui::RichText::new(items.len().to_string())
-    //                         .strong()
-    //                         .color(egui::Color32::GOLD),
-    //                 );
-    //             });
-
-    //             ui.add_space(4.0);
-    //             if ui.button("Fechar").clicked() {
-    //                 // lógica para fechar/ocultar o inventário
-    //             }
-    //         })
-    //     },
-    // ));
 }
 
 
